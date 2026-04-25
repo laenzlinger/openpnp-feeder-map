@@ -34,10 +34,12 @@ type Placement struct {
 	Enabled bool
 }
 
-// xmlJob mirrors the OpenPnP job XML.
+// xmlJob mirrors the OpenPnP job XML (supports both old and new format).
 type xmlJob struct {
 	XMLName   xml.Name     `xml:"openpnp-job"`
 	RootPanel xmlRootPanel `xml:"root-panel"`
+	// Old format
+	BoardLocations xmlBoardLocations `xml:"board-locations"`
 }
 
 type xmlRootPanel struct {
@@ -48,6 +50,10 @@ type xmlChildren struct {
 	Objects []xmlBoardLocation `xml:"object"`
 }
 
+type xmlBoardLocations struct {
+	Boards []xmlOldBoardLocation `xml:"board-location"`
+}
+
 type xmlBoardLocation struct {
 	Class    string   `xml:"class,attr"`
 	ID       string   `xml:"id,attr"`
@@ -55,6 +61,13 @@ type xmlBoardLocation struct {
 	FileName string   `xml:"file-name,attr"`
 	Enabled  bool     `xml:"locally-enabled,attr"`
 	Location Location `xml:"location"`
+}
+
+type xmlOldBoardLocation struct {
+	Side      string   `xml:"side,attr"`
+	BoardFile string   `xml:"board-file,attr"`
+	Enabled   bool     `xml:"enabled,attr"`
+	Location  Location `xml:"location"`
 }
 
 // xmlBoard mirrors the OpenPnP board XML.
@@ -86,6 +99,7 @@ func ParseJob(path string) (*Job, error) {
 		return nil, fmt.Errorf("parsing job file: %w", err)
 	}
 	job := &Job{}
+	// New format (root-panel > children > object)
 	for _, obj := range xj.RootPanel.Children.Objects {
 		job.Boards = append(job.Boards, BoardRef{
 			ID:       obj.ID,
@@ -93,6 +107,15 @@ func ParseJob(path string) (*Job, error) {
 			Side:     obj.Side,
 			Enabled:  obj.Enabled,
 			Location: obj.Location,
+		})
+	}
+	// Old format (board-locations > board-location)
+	for _, bl := range xj.BoardLocations.Boards {
+		job.Boards = append(job.Boards, BoardRef{
+			FileName: bl.BoardFile,
+			Side:     bl.Side,
+			Enabled:  bl.Enabled,
+			Location: bl.Location,
 		})
 	}
 	return job, nil
