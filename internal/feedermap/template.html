@@ -102,10 +102,15 @@ tr:hover td { background: var(--code-bg); cursor: pointer; }
   <span><span class="legend-dot" style="background:var(--ok)"></span> Job feeder</span>
   <span><span class="legend-dot" style="background:var(--dim)"></span> Unused feeder</span>
   <span><span class="legend-dot" style="background:var(--err)"></span> Missing part</span>
+  <span><span class="legend-dot" style="background:var(--warn)"></span> Board outline</span>
   <span>○ Reference hole &nbsp; → Feed direction</span>
 </div>
 
 <script>
+const boards = [
+{{range .Boards}}  {name:"{{.Name}}",x:{{.Location.X}},y:{{.Location.Y}},w:{{.Width}},h:{{.Height}},rot:{{.Location.Rotation}}},
+{{end}}];
+
 const feeders = [
 {{range .Feeders}}  {id:"{{.Feeder.ID}}",name:"{{.Feeder.Name}}",part:"{{.Feeder.PartID}}",type:"{{.Feeder.FeederType}}",tape:"{{.Feeder.TapeType}}",count:{{.Count}},x1:{{.StartX}},y1:{{.StartY}},x2:{{.EndX}},y2:{{.EndY}},hasEnd:{{.HasEnd}},tapeW:{{if .Feeder.TapeWidth}}{{.Feeder.TapeWidth.Value}}{{else}}0{{end}},pitch:{{if .Feeder.PartPitch}}{{.Feeder.PartPitch.Value}}{{else}}4{{end}},used:true},
 {{end}}
@@ -141,6 +146,36 @@ svg.appendChild(bed);
 // Include bed in bounds
 boundsAll = computeBounds([...feeders, {x1:{{.BedXMin}},y1:{{.BedYMin}},x2:{{.BedXMax}},y2:{{.BedYMax}},hasEnd:true,used:true}]);
 {{end}}
+
+// Draw board outlines
+boards.forEach(b => {
+  if (b.w === 0 && b.h === 0) return;
+  let g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  let cx = b.x, cy = -b.y;
+  if (b.rot !== 0) g.setAttribute('transform', `rotate(${-b.rot}, ${cx}, ${cy})`);
+  let rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', b.x); rect.setAttribute('y', -(b.y + b.h));
+  rect.setAttribute('width', b.w); rect.setAttribute('height', b.h);
+  rect.setAttribute('fill', 'none');
+  rect.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--warn').trim());
+  rect.setAttribute('stroke-width', '1'); rect.setAttribute('stroke-dasharray', '4 2');
+  g.appendChild(rect);
+  let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  text.setAttribute('x', b.x + b.w / 2); text.setAttribute('y', -(b.y + b.h) - 2);
+  text.setAttribute('text-anchor', 'middle');
+  text.classList.add('feeder-label');
+  text.style.fill = getComputedStyle(document.documentElement).getPropertyValue('--warn').trim();
+  text.textContent = b.name;
+  g.appendChild(text);
+  svg.appendChild(g);
+});
+
+// Include boards in bounds
+if (boards.length) {
+  let boardPts = boards.filter(b => b.w > 0 || b.h > 0).flatMap(b => [{x1:b.x,y1:b.y,x2:b.x+b.w,y2:b.y+b.h,hasEnd:true,used:true}]);
+  boundsAll = computeBounds([...feeders, ...boardPts]);
+  boundsJob = computeBounds([...feeders.filter(f => f.used), ...boardPts]);
+}
 
 function fitTo(b) { viewBox = {x:b.x, y:b.y, w:b.w, h:b.h}; applyViewBox(); }
 

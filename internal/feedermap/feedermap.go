@@ -25,6 +25,7 @@ type MapData struct {
 	Feeders        []FeederEntry // feeders needed for this job
 	MissingParts   []MissingPart // parts with no feeder
 	UnusedFeeders  []FeederEntry // enabled feeders not needed by this job
+	Boards         []openpnp.BoardEntry
 	BedXMin, BedXMax float64
 	BedYMin, BedYMax float64
 	HasBed         bool
@@ -37,7 +38,7 @@ type MissingPart struct {
 }
 
 // Build creates the feeder map data by matching job parts to machine feeders.
-func Build(jobParts map[string]int, machine *openpnp.Machine) *MapData {
+func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpnp.Machine) *MapData {
 	// Index feeders by part-id (only enabled feeders with a position).
 	feederByPart := make(map[string]*openpnp.Feeder)
 	for i := range machine.Feeders {
@@ -111,6 +112,7 @@ func Build(jobParts map[string]int, machine *openpnp.Machine) *MapData {
 		Feeders:       feeders,
 		MissingParts:  missing,
 		UnusedFeeders: unused,
+		Boards:        boards,
 		BedXMin:       machine.BedXMin,
 		BedXMax:       machine.BedXMax,
 		BedYMin:       machine.BedYMin,

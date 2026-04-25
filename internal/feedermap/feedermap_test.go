@@ -20,12 +20,12 @@ func TestBuild(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseMachine: %v", err)
 	}
-	parts, err := openpnp.LoadJobParts(testdataPath("job-new.xml"))
+	parts, boards, err := openpnp.LoadJobParts(testdataPath("job-new.xml"))
 	if err != nil {
 		t.Fatalf("LoadJobParts: %v", err)
 	}
 
-	data := Build(parts, machine)
+	data := Build(parts, boards, machine)
 
 	// Job feeders: R_0805-10K (LV8-01), C_0805-100n (LV8-02), QFN-48 (TRAY-01) = 3
 	if got := len(data.Feeders); got != 3 {
@@ -72,5 +72,12 @@ func TestBuild(t *testing.T) {
 	// Bed dimensions passed through
 	if !data.HasBed || data.BedXMax != 400.0 || data.BedYMax != 300.0 {
 		t.Errorf("bed = HasBed:%v (%.0f, %.0f), want true (400, 300)", data.HasBed, data.BedXMax, data.BedYMax)
+	}
+
+	// Boards passed through
+	if got := len(data.Boards); got != 1 {
+		t.Errorf("expected 1 board, got %d", got)
+	} else if data.Boards[0].Width != 50.0 {
+		t.Errorf("board width = %.1f, want 50.0", data.Boards[0].Width)
 	}
 }

@@ -31,7 +31,7 @@ func main() {
 	jobPath := flag.Arg(0)
 
 	// Parse inputs
-	jobParts, err := openpnp.LoadJobParts(jobPath)
+	jobParts, boards, err := openpnp.LoadJobParts(jobPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading job: %v\n", err)
 		os.Exit(1)
@@ -44,7 +44,7 @@ func main() {
 	}
 
 	// Build feeder map
-	data := feedermap.Build(jobParts, machine)
+	data := feedermap.Build(jobParts, boards, machine)
 	data.JobFile = filepath.Base(jobPath)
 
 	// Render HTML

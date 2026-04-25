@@ -23,7 +23,17 @@ type BoardRef struct {
 
 type Board struct {
 	Name       string
+	Width      float64 // from <dimensions> x
+	Height     float64 // from <dimensions> y
 	Placements []Placement
+}
+
+// BoardEntry combines a board's dimensions with its job placement location.
+type BoardEntry struct {
+	Name     string
+	Width    float64
+	Height   float64
+	Location Location
 }
 
 type Placement struct {
@@ -74,6 +84,7 @@ type xmlOldBoardLocation struct {
 type xmlBoard struct {
 	XMLName    xml.Name        `xml:"openpnp-board"`
 	Name       string          `xml:"name,attr"`
+	Dimensions Location        `xml:"dimensions"`
 	Placements xmlPlacements   `xml:"placements"`
 }
 
@@ -130,7 +141,7 @@ func ParseBoard(path string) (*Board, error) {
 	if err := xml.Unmarshal(data, &xb); err != nil {
 		return nil, fmt.Errorf("parsing board file: %w", err)
 	}
-	board := &Board{Name: xb.Name}
+	board := &Board{Name: xb.Name, Width: xb.Dimensions.X, Height: xb.Dimensions.Y}
 	for _, xp := range xb.Placements.Placements {
 		board.Placements = append(board.Placements, Placement(xp))
 	}
@@ -138,14 +149,16 @@ func ParseBoard(path string) (*Board, error) {
 }
 
 // LoadJobParts reads a job file and all referenced boards, returning
-// a map of part-id → count of enabled placements (excluding fiducials).
-func LoadJobParts(jobPath string) (map[string]int, error) {
+// a map of part-id → count of enabled placements (excluding fiducials)
+// and a list of board entries with their locations and dimensions.
+func LoadJobParts(jobPath string) (map[string]int, []BoardEntry, error) {
 	job, err := ParseJob(jobPath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	jobDir := filepath.Dir(jobPath)
 	parts := make(map[string]int)
+	var boards []BoardEntry
 	for _, br := range job.Boards {
 		if !br.Enabled {
 			continue
@@ -156,13 +169,19 @@ func LoadJobParts(jobPath string) (map[string]int, error) {
 		}
 		board, err := ParseBoard(boardPath)
 		if err != nil {
-			return nil, fmt.Errorf("board %s: %w", br.ID, err)
+			return nil, nil, fmt.Errorf("board %s: %w", br.ID, err)
 		}
+		boards = append(boards, BoardEntry{
+			Name:     board.Name,
+			Width:    board.Width,
+			Height:   board.Height,
+			Location: br.Location,
+		})
 		for _, p := range board.Placements {
 			if p.Enabled && p.Type == "Placement" {
 				parts[p.PartID]++
 			}
 		}
 	}
-	return parts, nil
+	return parts, boards, nil
 }
