@@ -1,5 +1,7 @@
 # openpnp-feeder-map
 
+[![CI](https://github.com/laenzlinger/openpnp-feeder-map/actions/workflows/ci.yml/badge.svg)](https://github.com/laenzlinger/openpnp-feeder-map/actions/workflows/ci.yml)
+
 Generates an interactive HTML feeder map for an [OpenPnP](https://openpnp.org/) job.
 
 Given a job file, it reads the referenced board placements and matches them against the feeders configured in `machine.xml`, producing a self-contained HTML page that shows:
