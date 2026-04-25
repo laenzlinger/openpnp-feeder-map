@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feeder Map — {{.JobFile}}</title>
+<style>
+:root { --theme: rgb(255,255,255); --entry: rgb(255,255,255); --primary: rgb(30,30,30); --secondary: rgb(108,108,108); --tertiary: rgb(214,214,214); --content: rgb(31,31,31); --code-bg: rgb(245,245,245); --border: rgb(238,238,238); --ok: #2a9d8f; --warn: #e9c46a; --err: #e76f51; --feeder-fill: rgba(42,157,143,0.08); --feeder-need: rgba(42,157,143,0.25); --dim: rgb(108,108,108); --bed: rgb(214,214,214); }
+@media(prefers-color-scheme:dark) {
+  :root { --theme: rgb(29,30,32); --entry: rgb(46,46,51); --primary: rgb(218,218,219); --secondary: rgb(155,156,157); --tertiary: rgb(65,66,68); --content: rgb(196,196,197); --code-bg: rgb(55,56,62); --border: rgb(51,51,51); --ok: #2a9d8f; --warn: #e9c46a; --err: #e76f51; --feeder-fill: rgba(42,157,143,0.12); --feeder-need: rgba(42,157,143,0.3); --dim: rgb(155,156,157); --bed: rgb(65,66,68); }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif; font-size: 16px; background: var(--theme); color: var(--primary); }
+h1 { padding: 1rem; font-size: 1.2rem; background: var(--entry); border-bottom: 1px solid var(--border); }
+h1 small { font-weight: normal; color: var(--secondary); margin-left: 0.5rem; }
+.layout { display: flex; height: calc(100vh - 3.5rem); }
+.map-wrap { flex: 1; position: relative; overflow: hidden; background: var(--theme); }
+svg { width: 100%; height: 100%; }
+.sidebar { width: 480px; min-width: 200px; max-width: 80vw; overflow-y: auto; background: var(--entry); border-left: 1px solid var(--border); padding: 1rem; flex-shrink: 0; }
+.resize-handle { width: 5px; cursor: col-resize; background: var(--border); flex-shrink: 0; }
+.resize-handle:hover { background: var(--ok); }
+.sidebar h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--secondary); margin: 1rem 0 0.5rem; }
+.sidebar h2:first-child { margin-top: 0; }
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+th { text-align: left; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border); color: var(--secondary); font-weight: 600; }
+td { padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border); }
+tr.highlight td { background: rgba(42,157,143,0.12); }
+tr:hover td { background: var(--code-bg); cursor: pointer; }
+.badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem; font-weight: 600; }
+.badge-strip { background: rgba(42,157,143,0.15); color: var(--ok); }
+.badge-pushpull { background: rgba(233,196,106,0.15); color: var(--warn); }
+.badge-tray { background: rgba(231,111,81,0.15); color: var(--err); }
+.badge-count { background: var(--code-bg); color: var(--primary); }
+.missing { color: var(--err); }
+.unused { color: var(--secondary); }
+.tape-hint { font-size: 0.7rem; color: var(--secondary); }
+.legend { display: flex; gap: 1rem; padding: 0.5rem 1rem; background: var(--entry); border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--secondary); }
+.legend span { display: flex; align-items: center; gap: 0.3rem; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.feeder-group { cursor: pointer; }
+.feeder-group:hover .feeder-line { stroke-width: 4; }
+.feeder-group:hover .feeder-dot { r: 5; }
+.feeder-label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 10px; fill: var(--primary); pointer-events: none; }
+.tooltip { position: absolute; background: var(--entry); border: 1px solid var(--border); padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.8rem; pointer-events: none; display: none; z-index: 10; max-width: 300px; }
+.tooltip .tt-name { font-weight: 600; color: var(--primary); }
+.tooltip .tt-part { color: var(--ok); }
+.tooltip .tt-detail { color: var(--secondary); font-size: 0.75rem; }
+</style>
+</head>
+<body>
+<h1>Feeder Map<small>{{.JobFile}}</small>
+  <label style="float:right;font-size:0.8rem;font-weight:normal;cursor:pointer;user-select:none">
+    <input type="checkbox" id="jobOnly" checked onchange="toggleJobOnly()"> Job feeders only
+  </label>
+</h1>
+<div class="layout">
+<div class="map-wrap" id="mapWrap">
+  <svg id="mapSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div class="tooltip" id="tooltip"></div>
+</div>
+<div class="resize-handle" id="resizeHandle"></div>
+<div class="sidebar" id="sidebar">
+  <h2>Job Feeders ({{len .Feeders}})</h2>
+  <table>
+    <tr><th>Feeder</th><th>Part</th><th>Qty</th><th>Type</th></tr>
+    {{range .Feeders}}
+    <tr data-feeder="{{.Feeder.ID}}" onclick="highlight('{{.Feeder.ID}}')">
+      <td style="white-space:nowrap">{{.Feeder.Name}}</td>
+      <td>{{.Feeder.PartID}}</td>
+      <td><span class="badge badge-count">{{.Count}}</span></td>
+      <td><span class="badge badge-{{.Feeder.FeederType | lower}}">{{.Feeder.FeederType}}</span>{{if .Feeder.TapeType}} <span class="tape-hint">{{.Feeder.TapeType}}{{if .Feeder.TapeWidth}} {{printf "%.0f" .Feeder.TapeWidth.Value}}mm{{end}}</span>{{end}}</td>
+    </tr>
+    {{end}}
+  </table>
+
+  {{if .MissingParts}}
+  <h2 class="missing">⚠ Missing Feeders ({{len .MissingParts}})</h2>
+  <table>
+    <tr><th>Part</th><th>Qty</th></tr>
+    {{range .MissingParts}}
+    <tr><td class="missing">{{.PartID}}</td><td><span class="badge badge-count">{{.Count}}</span></td></tr>
+    {{end}}
+  </table>
+  {{end}}
+
+  {{if .UnusedFeeders}}
+  <div id="unusedSection">
+  <h2 class="unused">Unused Feeders ({{len .UnusedFeeders}})</h2>
+  <table>
+    <tr><th>Feeder</th><th>Part</th></tr>
+    {{range .UnusedFeeders}}
+    <tr class="unused" data-feeder="{{.Feeder.ID}}" onclick="highlight('{{.Feeder.ID}}')">
+      <td>{{.Feeder.Name}}</td><td>{{.Feeder.PartID}}</td>
+    </tr>
+    {{end}}
+  </table>
+  </div>
+  {{end}}
+</div>
+</div>
+<div class="legend">
+  <span><span class="legend-dot" style="background:var(--ok)"></span> Job feeder</span>
+  <span><span class="legend-dot" style="background:var(--dim)"></span> Unused feeder</span>
+  <span><span class="legend-dot" style="background:var(--err)"></span> Missing part</span>
+  <span>○ Reference hole &nbsp; → Feed direction</span>
+</div>
+
+<script>
+const feeders = [
+{{range .Feeders}}  {id:"{{.Feeder.ID}}",name:"{{.Feeder.Name}}",part:"{{.Feeder.PartID}}",type:"{{.Feeder.FeederType}}",tape:"{{.Feeder.TapeType}}",count:{{.Count}},x1:{{.StartX}},y1:{{.StartY}},x2:{{.EndX}},y2:{{.EndY}},hasEnd:{{.HasEnd}},tapeW:{{if .Feeder.TapeWidth}}{{.Feeder.TapeWidth.Value}}{{else}}0{{end}},pitch:{{if .Feeder.PartPitch}}{{.Feeder.PartPitch.Value}}{{else}}4{{end}},used:true},
+{{end}}
+{{range .UnusedFeeders}}  {id:"{{.Feeder.ID}}",name:"{{.Feeder.Name}}",part:"{{.Feeder.PartID}}",type:"{{.Feeder.FeederType}}",tape:"{{.Feeder.TapeType}}",count:0,x1:{{.StartX}},y1:{{.StartY}},x2:{{.EndX}},y2:{{.EndY}},hasEnd:{{.HasEnd}},tapeW:{{if .Feeder.TapeWidth}}{{.Feeder.TapeWidth.Value}}{{else}}0{{end}},used:false},
+{{end}}];
+
+const svg = document.getElementById('mapSvg');
+const tooltip = document.getElementById('tooltip');
+const MARGIN = 30;
+
+// Compute bounds for a subset of feeders
+function computeBounds(list) {
+  let xs = list.flatMap(f => f.hasEnd ? [f.x1, f.x2] : [f.x1]);
+  let ys = list.flatMap(f => f.hasEnd ? [f.y1, f.y2] : [f.y1]);
+  if (!xs.length) return {x: 0, y: 0, w: 1, h: 1};
+  let xMin = Math.min(...xs), xMax = Math.max(...xs);
+  let yMin = Math.min(...ys), yMax = Math.max(...ys);
+  return {x: xMin - MARGIN, y: -(yMax + MARGIN), w: (xMax-xMin||1) + 2*MARGIN, h: (yMax-yMin||1) + 2*MARGIN};
+}
+
+let boundsAll = computeBounds(feeders);
+let boundsJob = computeBounds(feeders.filter(f => f.used));
+
+{{if .HasBed}}
+// Machine bed outline
+let bed = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+bed.setAttribute('x', {{.BedXMin}}); bed.setAttribute('y', -{{.BedYMax}});
+bed.setAttribute('width', {{.BedXMax}} - {{.BedXMin}});
+bed.setAttribute('height', {{.BedYMax}} - {{.BedYMin}});
+bed.setAttribute('fill', 'none'); bed.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--tertiary').trim());
+bed.setAttribute('stroke-width', '1'); bed.setAttribute('stroke-dasharray', '8 4');
+svg.appendChild(bed);
+// Include bed in bounds
+boundsAll = computeBounds([...feeders, {x1:{{.BedXMin}},y1:{{.BedYMin}},x2:{{.BedXMax}},y2:{{.BedYMax}},hasEnd:true,used:true}]);
+{{end}}
+
+function fitTo(b) { viewBox = {x:b.x, y:b.y, w:b.w, h:b.h}; applyViewBox(); }
+
+// Draw feeders
+feeders.forEach(f => {
+  let g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.classList.add('feeder-group');
+  if (!f.used) g.classList.add('unused-group');
+  g.dataset.feederId = f.id;
+
+  let color = f.used ? '#2a9d8f' : getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim();
+  let dimColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim();
+  let opacity = f.used ? '1' : '0.5';
+
+  // Tape outline for strip feeders
+  if (f.hasEnd && f.tapeW > 0) {
+    let dx = f.x2 - f.x1, dy = f.y2 - f.y1;
+    let len = Math.sqrt(dx*dx + dy*dy);
+    if (len > 0) {
+      let nx = -dy/len, ny = dx/len;
+      let hw = f.tapeW / 2;
+      let poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      let pts = [
+        [f.x1 + nx*hw, -(f.y1 + ny*hw)],
+        [f.x2 + nx*hw, -(f.y2 + ny*hw)],
+        [f.x2 - nx*hw, -(f.y2 - ny*hw)],
+        [f.x1 - nx*hw, -(f.y1 - ny*hw)],
+      ];
+      poly.setAttribute('points', pts.map(p => p.join(',')).join(' '));
+      poly.setAttribute('fill', color); poly.setAttribute('fill-opacity', '0.08');
+      poly.setAttribute('stroke', color); poly.setAttribute('stroke-width', '0.5');
+      poly.setAttribute('stroke-opacity', opacity == '1' ? '0.4' : '0.2');
+      g.appendChild(poly);
+
+      // Needed tape length for job
+      if (f.used && f.count > 0 && f.pitch > 0) {
+        let needLen = f.count * f.pitch;
+        let ux = dx/len, uy = dy/len; // unit vector along feed
+        let ex = f.x1 + ux * needLen, ey = f.y1 + uy * needLen;
+        let need = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        let npts = [
+          [f.x1 + nx*hw, -(f.y1 + ny*hw)],
+          [ex + nx*hw, -(ey + ny*hw)],
+          [ex - nx*hw, -(ey - ny*hw)],
+          [f.x1 - nx*hw, -(f.y1 - ny*hw)],
+        ];
+        need.setAttribute('points', npts.map(p => p.join(',')).join(' '));
+        need.setAttribute('fill', color); need.setAttribute('fill-opacity', '0.25');
+        need.setAttribute('stroke', 'none');
+        g.appendChild(need);
+      }
+    }
+  }
+
+  if (f.hasEnd) {
+    let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', f.x1); line.setAttribute('y1', -f.y1);
+    line.setAttribute('x2', f.x2); line.setAttribute('y2', -f.y2);
+    line.setAttribute('stroke', color); line.setAttribute('stroke-width', '2');
+    line.setAttribute('opacity', opacity); line.classList.add('feeder-line');
+    g.appendChild(line);
+  }
+
+  let dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  dot.setAttribute('cx', f.x1); dot.setAttribute('cy', -f.y1);
+  dot.setAttribute('r', '3'); dot.setAttribute('fill', color);
+  dot.setAttribute('opacity', opacity); dot.classList.add('feeder-dot');
+  g.appendChild(dot);
+
+  let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  text.setAttribute('x', f.x1 + 5); text.setAttribute('y', -f.y1 - 5);
+  text.classList.add('feeder-label'); text.setAttribute('opacity', opacity);
+  text.textContent = f.name;
+  if (f.hasEnd) {
+    let angle = Math.atan2(-(f.y2 - f.y1), f.x2 - f.x1) * 180 / Math.PI;
+    // Keep text readable (not upside down)
+    if (angle > 91 || angle < -91) angle += 180;
+    text.setAttribute('transform', `rotate(${angle}, ${f.x1 + 5}, ${-f.y1 - 5})`);
+  }
+  g.appendChild(text);
+
+  g.addEventListener('mouseenter', e => showTooltip(e, f));
+  g.addEventListener('mouseleave', () => tooltip.style.display = 'none');
+  g.addEventListener('click', () => highlight(f.id));
+  svg.appendChild(g);
+});
+
+function toggleJobOnly() {
+  let on = document.getElementById('jobOnly').checked;
+  document.querySelectorAll('.unused-group').forEach(g => g.style.display = on ? 'none' : '');
+  let us = document.getElementById('unusedSection');
+  if (us) us.style.display = on ? 'none' : '';
+  fitTo(on ? boundsJob : boundsAll);
+}
+
+function showTooltip(e, f) {
+  let tapeInfo = f.tape ? ` · ${f.tape}` : '';
+  let countInfo = f.count > 0 ? `<br><span class="tt-detail">${f.count} placements</span>` : '';
+  tooltip.innerHTML = `<div class="tt-name">${f.name}</div><div class="tt-part">${f.part}</div><span class="tt-detail">${f.type}${tapeInfo}</span>${countInfo}`;
+  tooltip.style.display = 'block';
+  let rect = document.getElementById('mapWrap').getBoundingClientRect();
+  tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
+  tooltip.style.top = (e.clientY - rect.top + 10) + 'px';
+}
+
+let highlightedId = null;
+function highlight(id) {
+  if (highlightedId === id) { highlightedId = null; } else { highlightedId = id; }
+  document.querySelectorAll('.feeder-group').forEach(g => {
+    if (!highlightedId) { g.style.opacity = ''; return; }
+    g.style.opacity = g.dataset.feederId === highlightedId ? '1' : '0.15';
+  });
+  document.querySelectorAll('tr[data-feeder]').forEach(tr => {
+    tr.classList.toggle('highlight', tr.dataset.feeder === highlightedId);
+  });
+}
+
+// Pan & zoom
+let viewBox = {x: 0, y: 0, w: 1, h: 1};
+function applyViewBox() { svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`); }
+svg.addEventListener('wheel', e => {
+  e.preventDefault();
+  let scale = e.deltaY > 0 ? 1.1 : 0.9;
+  let pt = svg.createSVGPoint();
+  pt.x = e.clientX; pt.y = e.clientY;
+  let svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+  viewBox.x = svgPt.x - (svgPt.x - viewBox.x) * scale;
+  viewBox.y = svgPt.y - (svgPt.y - viewBox.y) * scale;
+  viewBox.w *= scale; viewBox.h *= scale;
+  applyViewBox();
+});
+let dragging = false, dragStart = {};
+svg.addEventListener('mousedown', e => { dragging = true; dragStart = {x: e.clientX, y: e.clientY, vx: viewBox.x, vy: viewBox.y}; });
+svg.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  let ctm = svg.getScreenCTM();
+  let dx = (e.clientX - dragStart.x) / ctm.a;
+  let dy = (e.clientY - dragStart.y) / ctm.d;
+  viewBox.x = dragStart.vx - dx;
+  viewBox.y = dragStart.vy - dy;
+  applyViewBox();
+});
+window.addEventListener('mouseup', () => dragging = false);
+
+// Initial state: job only
+toggleJobOnly();
+
+// Sidebar resize
+(function() {
+  let handle = document.getElementById('resizeHandle');
+  let sidebar = document.getElementById('sidebar');
+  let resizing = false;
+  handle.addEventListener('mousedown', e => { resizing = true; e.preventDefault(); });
+  window.addEventListener('mousemove', e => {
+    if (!resizing) return;
+    let w = document.documentElement.clientWidth - e.clientX;
+    sidebar.style.width = Math.max(200, Math.min(w, window.innerWidth * 0.8)) + 'px';
+  });
+  window.addEventListener('mouseup', () => resizing = false);
+})();
+</script>
+</body>
+</html>
