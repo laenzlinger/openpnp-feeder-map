@@ -53,7 +53,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error creating output: %v\n", err)
 		os.Exit(1)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if err := feedermap.Render(f, data); err != nil {
 		fmt.Fprintf(os.Stderr, "Error rendering: %v\n", err)

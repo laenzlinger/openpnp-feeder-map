@@ -132,13 +132,7 @@ func ParseBoard(path string) (*Board, error) {
 	}
 	board := &Board{Name: xb.Name}
 	for _, xp := range xb.Placements.Placements {
-		board.Placements = append(board.Placements, Placement{
-			ID:      xp.ID,
-			PartID:  xp.PartID,
-			Side:    xp.Side,
-			Type:    xp.Type,
-			Enabled: xp.Enabled,
-		})
+		board.Placements = append(board.Placements, Placement(xp))
 	}
 	return board, nil
 }
