@@ -1,0 +1,26 @@
+<openpnp-board version="1.1" name="test-board">
+   <dimensions units="Millimeters" x="50.0" y="50.0" z="1.6" rotation="0.0"/>
+   <placements>
+      <placement version="1.4" id="R1" side="Top" part-id="R_0805-10K" type="Placement" enabled="true">
+         <location units="Millimeters" x="10.0" y="-20.0" z="0.0" rotation="0.0"/>
+      </placement>
+      <placement version="1.4" id="R2" side="Top" part-id="R_0805-10K" type="Placement" enabled="true">
+         <location units="Millimeters" x="15.0" y="-20.0" z="0.0" rotation="0.0"/>
+      </placement>
+      <placement version="1.4" id="C1" side="Top" part-id="C_0805-100n" type="Placement" enabled="true">
+         <location units="Millimeters" x="20.0" y="-25.0" z="0.0" rotation="90.0"/>
+      </placement>
+      <placement version="1.4" id="U1" side="Top" part-id="QFN-48" type="Placement" enabled="true">
+         <location units="Millimeters" x="25.0" y="-30.0" z="0.0" rotation="0.0"/>
+      </placement>
+      <placement version="1.4" id="J1" side="Top" part-id="USB-C" type="Placement" enabled="false">
+         <location units="Millimeters" x="30.0" y="-10.0" z="0.0" rotation="0.0"/>
+      </placement>
+      <placement version="1.4" id="FID1" side="Top" part-id="Fiducial" type="Fiducial" enabled="true">
+         <location units="Millimeters" x="5.0" y="-5.0" z="0.0" rotation="0.0"/>
+      </placement>
+      <placement version="1.4" id="D1" side="Top" part-id="LED-0805" type="Placement" enabled="true">
+         <location units="Millimeters" x="35.0" y="-15.0" z="0.0" rotation="0.0"/>
+      </placement>
+   </placements>
+</openpnp-board>

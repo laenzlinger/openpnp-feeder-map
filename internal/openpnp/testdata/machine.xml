@@ -1,0 +1,46 @@
+<openpnp-machine>
+   <machine class="org.openpnp.machine.reference.ReferenceMachine" speed="1.0">
+      <axes>
+         <axis class="org.openpnp.machine.reference.axis.ReferenceControllerAxis" name="x" type="X" soft-limit-low-enabled="true" soft-limit-high-enabled="true">
+            <soft-limit-low value="0.0" units="Millimeters"/>
+            <soft-limit-high value="400.0" units="Millimeters"/>
+         </axis>
+         <axis class="org.openpnp.machine.reference.axis.ReferenceControllerAxis" name="y" type="Y" soft-limit-low-enabled="true" soft-limit-high-enabled="true">
+            <soft-limit-low value="0.0" units="Millimeters"/>
+            <soft-limit-high value="300.0" units="Millimeters"/>
+         </axis>
+      </axes>
+      <feeders>
+         <feeder class="org.openpnp.machine.reference.feeder.ReferenceStripFeeder" version="1.1" id="FDR001" name="LV8-01" enabled="true" part-id="R_0805-10K" tape-type="WhitePaper" standard-eia-481="true" vision-enabled="true" feed-count="0" max-feed-count="0">
+            <location units="Millimeters" x="0.0" y="0.0" z="0.0" rotation="90.0"/>
+            <reference-hole-location units="Millimeters" x="100.0" y="200.0" z="8.5" rotation="0.0"/>
+            <last-hole-location units="Millimeters" x="100.0" y="196.0" z="0.0" rotation="0.0"/>
+            <part-pitch value="4.0" units="Millimeters"/>
+            <tape-width value="8.0" units="Millimeters"/>
+         </feeder>
+         <feeder class="org.openpnp.machine.reference.feeder.ReferenceStripFeeder" version="1.1" id="FDR002" name="LV8-02" enabled="true" part-id="C_0805-100n" tape-type="WhitePaper" standard-eia-481="true" vision-enabled="true" feed-count="0" max-feed-count="0">
+            <location units="Millimeters" x="0.0" y="0.0" z="0.0" rotation="90.0"/>
+            <reference-hole-location units="Millimeters" x="112.0" y="200.0" z="8.5" rotation="0.0"/>
+            <last-hole-location units="Millimeters" x="112.0" y="196.0" z="0.0" rotation="0.0"/>
+            <part-pitch value="4.0" units="Millimeters"/>
+            <tape-width value="8.0" units="Millimeters"/>
+         </feeder>
+         <feeder class="org.openpnp.machine.reference.feeder.ReferenceStripFeeder" version="1.1" id="FDR003" name="LV8-03" enabled="false" part-id="R_0805-1K" tape-type="WhitePaper" standard-eia-481="true" vision-enabled="true" feed-count="0" max-feed-count="0">
+            <location units="Millimeters" x="0.0" y="0.0" z="0.0" rotation="90.0"/>
+            <reference-hole-location units="Millimeters" x="124.0" y="200.0" z="8.5" rotation="0.0"/>
+            <last-hole-location units="Millimeters" x="124.0" y="196.0" z="0.0" rotation="0.0"/>
+            <part-pitch value="4.0" units="Millimeters"/>
+            <tape-width value="8.0" units="Millimeters"/>
+         </feeder>
+         <feeder class="org.openpnp.machine.reference.feeder.ReferencePushPullFeeder" version="1.1" id="FDR004" name="PP-01" enabled="true" part-id="SOT-23-NPN">
+            <location units="Millimeters" x="200.0" y="50.0" z="8.0" rotation="90.0"/>
+            <hole-1-location units="Millimeters" x="196.0" y="48.0" z="0.0" rotation="0.0"/>
+            <hole-2-location units="Millimeters" x="196.0" y="52.0" z="0.0" rotation="0.0"/>
+            <part-pitch value="4.0" units="Millimeters"/>
+         </feeder>
+         <feeder class="org.openpnp.machine.reference.feeder.ReferenceTrayFeeder" version="1.1" id="FDR005" name="TRAY-01" enabled="true" part-id="QFN-48" tray-count-x="3" tray-count-y="2">
+            <location units="Millimeters" x="300.0" y="150.0" z="9.0" rotation="0.0"/>
+         </feeder>
+      </feeders>
+   </machine>
+</openpnp-machine>

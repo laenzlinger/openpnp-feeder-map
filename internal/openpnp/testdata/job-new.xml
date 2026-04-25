@@ -1,0 +1,11 @@
+<openpnp-job version="2.0">
+   <root-panel version="2.0">
+      <dimensions units="Millimeters" x="0.0" y="0.0" z="0.0" rotation="0.0"/>
+      <placements/>
+      <children>
+         <object class="org.openpnp.model.BoardLocation" side="Top" id="Brd1" file-name="board.xml" check-fiducials="false" locally-enabled="true">
+            <location units="Millimeters" x="0.0" y="0.0" z="0.0" rotation="0.0"/>
+         </object>
+      </children>
+   </root-panel>
+</openpnp-job>
