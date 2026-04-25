@@ -144,6 +144,16 @@ boundsAll = computeBounds([...feeders, {x1:{{.BedXMin}},y1:{{.BedYMin}},x2:{{.Be
 
 function fitTo(b) { viewBox = {x:b.x, y:b.y, w:b.w, h:b.h}; applyViewBox(); }
 
+function feedAngle(f) {
+  if (!f.hasEnd) return 0;
+  let dx = f.x2 - f.x1, dy = f.y2 - f.y1;
+  let len = Math.sqrt(dx*dx + dy*dy);
+  let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  // Short strips: snap to nearest 90° to avoid noise
+  if (len < 6) angle = Math.round(angle / 90) * 90;
+  return angle;
+}
+
 // Draw feeders
 feeders.forEach(f => {
   let g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -211,15 +221,22 @@ feeders.forEach(f => {
   g.appendChild(dot);
 
   let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-  text.setAttribute('x', f.x1 + 5); text.setAttribute('y', -f.y1 - 5);
-  text.classList.add('feeder-label'); text.setAttribute('opacity', opacity);
-  text.textContent = f.name;
+  let labelOffset = f.tapeW > 0 ? f.tapeW / 2 + 2 : 5;
   if (f.hasEnd) {
+    let dx = f.x2 - f.x1, dy = f.y2 - f.y1;
+    let len = Math.sqrt(dx*dx + dy*dy) || 1;
+    let nx = -dy/len, ny = dx/len; // perpendicular
+    text.setAttribute('x', f.x1 + nx * labelOffset);
+    text.setAttribute('y', -(f.y1 + ny * labelOffset));
     let angle = Math.atan2(-(f.y2 - f.y1), f.x2 - f.x1) * 180 / Math.PI;
     // Keep text readable (not upside down)
     if (angle > 91 || angle < -91) angle += 180;
-    text.setAttribute('transform', `rotate(${angle}, ${f.x1 + 5}, ${-f.y1 - 5})`);
+    text.setAttribute('transform', `rotate(${angle}, ${f.x1 + nx * labelOffset}, ${-(f.y1 + ny * labelOffset)})`);
+  } else {
+    text.setAttribute('x', f.x1 + labelOffset); text.setAttribute('y', -f.y1);
   }
+  text.classList.add('feeder-label'); text.setAttribute('opacity', opacity);
+  text.textContent = f.name;
   g.appendChild(text);
 
   g.addEventListener('mouseenter', e => showTooltip(e, f));
