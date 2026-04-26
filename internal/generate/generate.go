@@ -213,6 +213,39 @@ func WritePosFile(placements []Placement, path string) error {
 	return err
 }
 
+// BoundingBox returns the width and height that enclose all placements.
+// Adds a small margin (2 mm) around the outermost components.
+func BoundingBox(placements []Placement) (width, height float64) {
+	if len(placements) == 0 {
+		return 0, 0
+	}
+	var minX, maxX, minY, maxY float64
+	first := true
+	for _, p := range placements {
+		x, _ := strconv.ParseFloat(p.X, 64)
+		y, _ := strconv.ParseFloat(p.Y, 64)
+		if first {
+			minX, maxX, minY, maxY = x, x, y, y
+			first = false
+			continue
+		}
+		if x < minX {
+			minX = x
+		}
+		if x > maxX {
+			maxX = x
+		}
+		if y < minY {
+			minY = y
+		}
+		if y > maxY {
+			maxY = y
+		}
+	}
+	const margin = 2.0
+	return maxX - minX + 2*margin, maxY - minY + 2*margin
+}
+
 // Stats returns placement statistics.
 func Stats(placements []Placement) PlacementStats {
 	var s PlacementStats

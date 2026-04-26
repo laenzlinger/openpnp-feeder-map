@@ -104,6 +104,7 @@ func parseFeederCSV(path string) ([]openpnp.FeederAssignment, error) {
 	defer func() { _ = f.Close() }()
 
 	reader := csv.NewReader(f)
+	reader.Comment = '#'
 	records, err := reader.ReadAll()
 	if err != nil {
 		return nil, fmt.Errorf("reading CSV: %w", err)

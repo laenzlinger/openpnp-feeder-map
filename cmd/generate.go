@@ -20,16 +20,20 @@ var (
 )
 
 var generateCmd = &cobra.Command{
-	Use:   "generate",
+	Use:   "generate [board.csv]",
 	Short: "Generate OpenPnP board XML from KiCad position CSV",
 	Long: `Reads a KiCad position CSV (from stdin or file) and generates an OpenPnP
 board XML file with remapped package names.
 
 Fiducials are auto-detected from footprint names containing "Fiducial".
 
-Example:
+Example (KiCad 10+ writes to file):
+  kicad-cli pcb export pos --format csv --side both --units mm --smd-only --exclude-dnp board.kicad_pcb
+  openpnp-tools generate -o pnp/ -n myboard board.csv
+
+Example (KiCad ≤9 writes to stdout):
   kicad-cli pcb export pos --format csv --side both --units mm --smd-only --exclude-dnp board.kicad_pcb \
-    | openpnp-tools generate -o pnp/`,
+    | openpnp-tools generate -o pnp/ -n myboard`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		home, _ := os.UserHomeDir()
 		if packageMapFlag == "" {
@@ -61,8 +65,13 @@ Example:
 			return fmt.Errorf("creating output dir: %w", err)
 		}
 
+		w, h := boardWidth, boardHeight
+		if w == 0 && h == 0 {
+			w, h = generate.BoundingBox(placements)
+		}
+
 		boardPath := filepath.Join(generateOutputDir, generateBoardName+".board.xml")
-		if err := generate.WriteBoardXML(placements, boardPath, generateBoardName, boardWidth, boardHeight); err != nil {
+		if err := generate.WriteBoardXML(placements, boardPath, generateBoardName, w, h); err != nil {
 			return fmt.Errorf("writing board XML: %w", err)
 		}
 

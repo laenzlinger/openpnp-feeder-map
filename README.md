@@ -15,6 +15,11 @@ Reads a KiCad position CSV and generates an OpenPnP board XML with remapped
 package names. Fiducials are auto-detected. Missing parts are created in `parts.xml`.
 
 ```bash
+# KiCad 10+ (writes to file)
+kicad-cli pcb export pos --format csv --side both --units mm --smd-only --exclude-dnp board.kicad_pcb
+openpnp-tools generate -o pnp/ -n myboard board.csv
+
+# KiCad ≤9 (writes to stdout)
 kicad-cli pcb export pos --format csv --side both --units mm --smd-only --exclude-dnp board.kicad_pcb \
   | openpnp-tools generate -o pnp/ -n myboard
 ```
@@ -94,6 +99,8 @@ RH12-01,SOT-223-NCP1117-3.3_SOT223
 | `feeder` | Feeder slot name: `{L/R}{V/H}{width}-{slot}` zero-padded (e.g. `LV08-01`, `RH12-03`) |
 | `part` | Part ID: `{Package}-{Value}` matching the board XML (e.g. `C_0805-100n`) |
 
+Lines starting with `#` are comments.
+
 Feeder naming convention:
 - `L`/`R` = left/right side of machine bed
 - `V`/`H` = vorne (front) / hinten (back)
@@ -132,8 +139,8 @@ make feeders      # reassigns all feeder slots for this project
 ```makefile
 pnp:
 	kicad-cli pcb export pos --format csv --side both --units mm \
-		--smd-only --exclude-dnp board.kicad_pcb \
-	| openpnp-tools generate -o pnp -n $(PROJECT)
+		--smd-only --exclude-dnp board.kicad_pcb
+	openpnp-tools generate -o pnp -n $(PROJECT) board.csv
 	openpnp-tools ensure-parts pnp/$(PROJECT).board.xml
 
 feeders:

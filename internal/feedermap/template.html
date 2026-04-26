@@ -120,10 +120,10 @@ const feeders = [
 
 const stripLength = {{.StripLength}};
 
-// Extend strip feeders to configured strip length
+// Extend strip feeders to configured strip length (not push-pull)
 if (stripLength > 0) {
   feeders.forEach(f => {
-    if (!f.hasEnd) return;
+    if (!f.hasEnd || f.type === 'PushPull') return;
     let dx = f.x2 - f.x1, dy = f.y2 - f.y1;
     let len = Math.sqrt(dx*dx + dy*dy);
     if (len > 0 && len < stripLength) {
@@ -229,8 +229,12 @@ feeders.forEach(f => {
       let p2 = [f.x2 + nx*hw, -(f.y2 + ny*hw)];
       let p3 = [f.x2 - nx*hw, -(f.y2 - ny*hw)];
       let p4 = [f.x1 - nx*hw, -(f.y1 - ny*hw)];
-      // Open-ended: draw 3 sides (start cap + both sides, no end cap)
-      poly.setAttribute('d', `M${p2[0]},${p2[1]} L${p1[0]},${p1[1]} L${p4[0]},${p4[1]} L${p3[0]},${p3[1]}`);
+      // Open-ended for strips, closed for push-pull
+      if (f.type === 'PushPull') {
+        poly.setAttribute('d', `M${p1[0]},${p1[1]} L${p2[0]},${p2[1]} L${p3[0]},${p3[1]} L${p4[0]},${p4[1]} Z`);
+      } else {
+        poly.setAttribute('d', `M${p2[0]},${p2[1]} L${p1[0]},${p1[1]} L${p4[0]},${p4[1]} L${p3[0]},${p3[1]}`);
+      }
       poly.setAttribute('fill', color); poly.setAttribute('fill-opacity', '0.05');
       poly.setAttribute('stroke', color); poly.setAttribute('stroke-width', '0.5');
       poly.setAttribute('stroke-opacity', opacity == '1' ? '0.4' : '0.2');
