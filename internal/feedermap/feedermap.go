@@ -47,7 +47,7 @@ func pushPullEnd(f *openpnp.Feeder, length float64) (float64, float64) {
 		length = 120 // default
 	}
 	rad := f.Location.Rotation * math.Pi / 180
-	return f.PickX() + math.Cos(rad)*length, f.PickY() + math.Sin(rad)*length
+	return f.PickX() - math.Cos(rad)*length, f.PickY() - math.Sin(rad)*length
 }
 
 // calcCapacity returns the max number of parts a strip feeder can hold.
