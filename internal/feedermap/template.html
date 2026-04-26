@@ -28,6 +28,7 @@ tr.highlight td { background: rgba(42,157,143,0.12); }
 tr:hover td { background: var(--code-bg); cursor: pointer; }
 .badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem; font-weight: 600; }
 .badge-strip { background: rgba(42,157,143,0.15); color: var(--ok); }
+.badge-pushpull { background: rgba(230,126,34,0.15); color: #e67e22; }
 .badge-pushpull { background: rgba(233,196,106,0.15); color: var(--warn); }
 .badge-tray { background: rgba(231,111,81,0.15); color: var(--err); }
 .badge-count { background: var(--code-bg); color: var(--primary); }
@@ -265,11 +266,28 @@ feeders.forEach(f => {
     // No center line — tape outline is enough
   }
 
-  let dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  dot.setAttribute('cx', f.x1); dot.setAttribute('cy', -f.y1);
-  dot.setAttribute('r', '3'); dot.setAttribute('fill', color);
-  dot.setAttribute('opacity', opacity); dot.classList.add('feeder-dot');
-  g.appendChild(dot);
+  // Pick point marker: arrow for push-pull, dot for strip
+  if (f.type === 'PushPull' && f.hasEnd) {
+    let dx = f.x2 - f.x1, dy = f.y2 - f.y1;
+    let len = Math.sqrt(dx*dx + dy*dy) || 1;
+    let ux = dx/len, uy = dy/len;
+    let s = 4; // arrow size
+    let arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    // Arrow pointing in feed direction (toward end)
+    let tip = [f.x1 - ux*s, -(f.y1 - uy*s)];
+    let left = [f.x1 + uy*s*0.5, -(f.y1 - ux*s*0.5)];
+    let right = [f.x1 - uy*s*0.5, -(f.y1 + ux*s*0.5)];
+    arrow.setAttribute('points', [tip, left, right].map(p => p.join(',')).join(' '));
+    arrow.setAttribute('fill', color); arrow.setAttribute('opacity', opacity);
+    arrow.classList.add('feeder-dot');
+    g.appendChild(arrow);
+  } else {
+    let dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('cx', f.x1); dot.setAttribute('cy', -f.y1);
+    dot.setAttribute('r', '3'); dot.setAttribute('fill', color);
+    dot.setAttribute('opacity', opacity); dot.classList.add('feeder-dot');
+    g.appendChild(dot);
+  }
 
   let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   let labelOffset = f.tapeW > 0 ? f.tapeW / 2 + 2 : 5;
