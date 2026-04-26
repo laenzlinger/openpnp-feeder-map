@@ -9,10 +9,10 @@ import (
 )
 
 type Machine struct {
-	Feeders []Feeder
+	Feeders          []Feeder
 	BedXMin, BedXMax float64
 	BedYMin, BedYMax float64
-	HasBed bool
+	HasBed           bool
 }
 
 type Feeder struct {
@@ -92,7 +92,7 @@ func (f *Feeder) PickY() float64 {
 
 // xmlMachine mirrors the top-level machine.xml structure enough to extract feeders.
 type xmlMachine struct {
-	XMLName xml.Name       `xml:"openpnp-machine"`
+	XMLName xml.Name        `xml:"openpnp-machine"`
 	Machine xmlMachineInner `xml:"machine"`
 }
 
@@ -106,12 +106,12 @@ type xmlAxes struct {
 }
 
 type xmlAxis struct {
-	Name             string  `xml:"name,attr"`
-	Type             string  `xml:"type,attr"`
-	SoftLimitLowEnabled  bool `xml:"soft-limit-low-enabled,attr"`
-	SoftLimitHighEnabled bool `xml:"soft-limit-high-enabled,attr"`
-	SoftLimitLow     *Length `xml:"soft-limit-low"`
-	SoftLimitHigh    *Length `xml:"soft-limit-high"`
+	Name                 string  `xml:"name,attr"`
+	Type                 string  `xml:"type,attr"`
+	SoftLimitLowEnabled  bool    `xml:"soft-limit-low-enabled,attr"`
+	SoftLimitHighEnabled bool    `xml:"soft-limit-high-enabled,attr"`
+	SoftLimitLow         *Length `xml:"soft-limit-low"`
+	SoftLimitHigh        *Length `xml:"soft-limit-high"`
 }
 
 type xmlFeeders struct {
@@ -119,14 +119,14 @@ type xmlFeeders struct {
 }
 
 type xmlFeeder struct {
-	Class     string `xml:"class,attr"`
-	ID        string `xml:"id,attr"`
-	Name      string `xml:"name,attr"`
-	Enabled   bool   `xml:"enabled,attr"`
-	PartID    string `xml:"part-id,attr"`
-	TapeType  string `xml:"tape-type,attr"`
-	TrayCountX int   `xml:"tray-count-x,attr"`
-	TrayCountY int   `xml:"tray-count-y,attr"`
+	Class      string `xml:"class,attr"`
+	ID         string `xml:"id,attr"`
+	Name       string `xml:"name,attr"`
+	Enabled    bool   `xml:"enabled,attr"`
+	PartID     string `xml:"part-id,attr"`
+	TapeType   string `xml:"tape-type,attr"`
+	TrayCountX int    `xml:"tray-count-x,attr"`
+	TrayCountY int    `xml:"tray-count-y,attr"`
 
 	Location              Location  `xml:"location"`
 	ReferenceHoleLocation *Location `xml:"reference-hole-location"`

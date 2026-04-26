@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	generateOutputDir  string
-	generateBoardName  string
-	packageMapFlag     string
+	generateOutputDir string
+	generateBoardName string
+	packageMapFlag    string
 )
 
 var generateCmd = &cobra.Command{

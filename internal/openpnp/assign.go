@@ -71,7 +71,7 @@ func AssignFeeders(machinePath string, assignments []FeederAssignment) ([]Assign
 		})
 	}
 
-	if err := os.WriteFile(machinePath, []byte(content), 0o644); err != nil {
+	if err := os.WriteFile(machinePath, []byte(content), 0o600); err != nil {
 		return nil, fmt.Errorf("writing machine.xml: %w", err)
 	}
 	return results, nil

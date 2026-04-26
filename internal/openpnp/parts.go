@@ -23,21 +23,21 @@ type EnsurePartsResult struct {
 
 // DefaultHeights maps package prefixes to default component heights in mm.
 var DefaultHeights = map[string]float64{
-	"C_0805":      0.9,
-	"R_0805":      0.5,
-	"LED_0805":    0.8,
-	"SOT-23":      1.1,
-	"SOT-23-5":    1.3,
-	"SOT-23-6":    1.3,
-	"SOT-223":     1.6,
-	"SOIC-8":      1.75,
-	"SOIC-8-EP":   0.65,
-	"QFN-48-7x7":  0.9,
-	"FUSE-2512":   1.0,
-	"TANT-D":      1.9,
-	"IND-6045":    4.2,
+	"C_0805":       0.9,
+	"R_0805":       0.5,
+	"LED_0805":     0.8,
+	"SOT-23":       1.1,
+	"SOT-23-5":     1.3,
+	"SOT-23-6":     1.3,
+	"SOT-223":      1.6,
+	"SOIC-8":       1.75,
+	"SOIC-8-EP":    0.65,
+	"QFN-48-7x7":   0.9,
+	"FUSE-2512":    1.0,
+	"TANT-D":       1.9,
+	"IND-6045":     4.2,
 	"WS2812B-5050": 1.6,
-	"XTAL-2016":   0.7,
+	"XTAL-2016":    0.7,
 	"FIDUCIAL-1X2": 0.0,
 	"ECAP-6.3x7.7": 7.7,
 }
@@ -101,7 +101,7 @@ func EnsureParts(partsPath string, partIDs []string) (*EnsurePartsResult, error)
 	}
 
 	if len(result.Created) > 0 {
-		if err := os.WriteFile(partsPath, []byte(content), 0o644); err != nil {
+		if err := os.WriteFile(partsPath, []byte(content), 0o600); err != nil {
 			return nil, fmt.Errorf("writing parts.xml: %w", err)
 		}
 	}

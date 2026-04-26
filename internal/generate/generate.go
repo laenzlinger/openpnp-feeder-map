@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+const placementTypeFiducial = "Fiducial"
+
 // Placement holds one component from the KiCad position export.
 type Placement struct {
 	Ref     string
@@ -87,7 +89,7 @@ func ParseKiCadCSV(r io.Reader, pkgMap map[string]string) ([]Placement, error) {
 		ptype := "Placement"
 		enabled := true
 		if strings.Contains(strings.ToLower(kicadFP), "fiducial") {
-			ptype = "Fiducial"
+			ptype = placementTypeFiducial
 		}
 
 		placements = append(placements, Placement{
@@ -170,7 +172,7 @@ func Stats(placements []Placement) PlacementStats {
 	for _, p := range placements {
 		s.Total++
 		switch {
-		case p.Type == "Fiducial":
+		case p.Type == placementTypeFiducial:
 			s.Fiducials++
 		case p.Enabled:
 			s.Active++

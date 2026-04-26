@@ -82,10 +82,10 @@ type xmlOldBoardLocation struct {
 
 // xmlBoard mirrors the OpenPnP board XML.
 type xmlBoard struct {
-	XMLName    xml.Name        `xml:"openpnp-board"`
-	Name       string          `xml:"name,attr"`
-	Dimensions Location        `xml:"dimensions"`
-	Placements xmlPlacements   `xml:"placements"`
+	XMLName    xml.Name      `xml:"openpnp-board"`
+	Name       string        `xml:"name,attr"`
+	Dimensions Location      `xml:"dimensions"`
+	Placements xmlPlacements `xml:"placements"`
 }
 
 type xmlPlacements struct {

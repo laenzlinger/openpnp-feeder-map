@@ -14,9 +14,9 @@ FID1,Fiducial,Fiducial_1mm_Mask2mm,5.0,-5.0,0.0,top
 U1,ASM1061,QFN50P700X700X90-49N-D,30.0,-40.0,-45.0,top`
 
 	pkgMap := map[string]string{
-		"C_0805_2012Metric":       "C_0805",
-		"QFN50P700X700X90-49N-D":  "QFN-48-7x7",
-		"Fiducial_1mm_Mask2mm":    "FIDUCIAL-1X2",
+		"C_0805_2012Metric":      "C_0805",
+		"QFN50P700X700X90-49N-D": "QFN-48-7x7",
+		"Fiducial_1mm_Mask2mm":   "FIDUCIAL-1X2",
 	}
 
 	placements, err := ParseKiCadCSV(strings.NewReader(csv), pkgMap)

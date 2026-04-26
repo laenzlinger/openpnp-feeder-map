@@ -10,25 +10,25 @@ import (
 
 // FeederEntry is one row in the feeder map output.
 type FeederEntry struct {
-	Feeder   openpnp.Feeder
-	Count    int     // placements in this job
-	StartX   float64 // reference hole / pick location X
-	StartY   float64 // reference hole / pick location Y
-	EndX     float64 // last hole X (strip feeders)
-	EndY     float64 // last hole Y (strip feeders)
-	HasEnd   bool    // true if strip/pushpull with two points
+	Feeder openpnp.Feeder
+	Count  int     // placements in this job
+	StartX float64 // reference hole / pick location X
+	StartY float64 // reference hole / pick location Y
+	EndX   float64 // last hole X (strip feeders)
+	EndY   float64 // last hole Y (strip feeders)
+	HasEnd bool    // true if strip/pushpull with two points
 }
 
 // MapData holds everything the HTML template needs.
 type MapData struct {
-	JobFile        string
-	Feeders        []FeederEntry // feeders needed for this job
-	MissingParts   []MissingPart // parts with no feeder
-	UnusedFeeders  []FeederEntry // enabled feeders not needed by this job
-	Boards         []openpnp.BoardEntry
+	JobFile          string
+	Feeders          []FeederEntry // feeders needed for this job
+	MissingParts     []MissingPart // parts with no feeder
+	UnusedFeeders    []FeederEntry // enabled feeders not needed by this job
+	Boards           []openpnp.BoardEntry
 	BedXMin, BedXMax float64
 	BedYMin, BedYMax float64
-	HasBed         bool
+	HasBed           bool
 }
 
 // MissingPart is a job part that has no matching feeder.
