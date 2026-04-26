@@ -2,94 +2,141 @@
 
 [![CI](https://github.com/laenzlinger/openpnp-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/laenzlinger/openpnp-tools/actions/workflows/ci.yml)
 
-Generates an interactive HTML feeder map for an [OpenPnP](https://openpnp.org/) job.
+CLI toolkit for managing [OpenPnP](https://openpnp.org/) pick-and-place jobs.
 
-Given a job file, it reads the referenced board placements and matches them against the feeders configured in `machine.xml`, producing a self-contained HTML page that shows:
+Bridges the gap between KiCad PCB design and OpenPnP machine operation — generating
+board files, assigning feeders, and visualizing the setup.
 
-- **Visual map** of feeder positions on the machine bed (pan & zoom, click to highlight)
-- **Machine bed outline** derived from axis soft limits
-- **Strip feeder outlines** showing tape width and feed direction
-- **Needed tape length** — highlighted portion of each strip based on placement count × part pitch
-- **Job feeders** — which feeders are needed, what part they supply, and how many placements
-- **Missing parts** — job parts that have no feeder assigned
-- **Unused feeders** — enabled feeders not needed by this job
-- **Tape info** — feeder type, tape type, tape width
-- **Light/dark mode** — follows system preference, styled to match [PaperMod](https://github.com/adityatelange/hugo-PaperMod)
-- **Job focus toggle** — show only job-relevant feeders or the full machine
-- **Resizable sidebar** — drag to adjust
+## Commands
 
-Designed for use with strip feeders and push-pull feeders on machines like the [Lumen PnP](https://opulo.io/).
+### `generate` — KiCad → OpenPnP board
 
-## How it works
-
-```
-job.xml ──→ board.xml ──→ list of part-ids + quantities
-                                    │
-machine.xml ──→ feeders ────────────┤
-                                    ▼
-                          match parts → feeders
-                                    │
-                                    ▼
-                          feeder-map.html
-```
-
-1. The **job file** references one or more board files
-2. Each **board file** lists placements with `part-id` and quantity
-3. The **machine config** contains feeders with `part-id` and physical locations
-4. Parts are matched by exact `part-id` — same as OpenPnP itself
-
-## Usage
-
-```
-openpnp-tools [flags] <job.xml>
-```
-
-### Flags
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-machine` | `~/.openpnp2/machine.xml` | Path to machine.xml |
-| `-output` | `feeder-map.html` | Output HTML file path |
-
-### Example
+Reads a KiCad position CSV and generates an OpenPnP board XML with remapped
+package names. Fiducials are auto-detected. Missing parts are created in `parts.xml`.
 
 ```bash
-openpnp-tools -output granit-feeders.html ~/projects/granit/pnp/granit.job.xml
+kicad-cli pcb export pos --format csv --side both --units mm --smd-only --exclude-dnp board.kicad_pcb \
+  | openpnp-tools generate -o pnp/ -n myboard
 ```
 
-Then open `granit-feeders.html` in a browser.
+Outputs:
+- `pnp/myboard.board.xml` — OpenPnP board with placements
+- `pnp/myboard.pos` — remapped position file
 
-## Supported feeder types
+### `ensure-parts` — create missing parts
 
-| Type | Visualization |
-|------|---------------|
-| ReferenceStripFeeder | Tape outline with feed direction, needed length highlight |
-| ReferencePushPullFeeder | Location dot with feed direction |
-| ReferenceTrayFeeder | Location dot |
+Ensures all parts referenced by a board exist in `parts.xml` with correct
+package-id and heights from the package map.
+
+```bash
+openpnp-tools ensure-parts pnp/myboard.board.xml
+```
+
+### `assign` — load feeder configuration
+
+Assigns parts to feeder slots in `machine.xml` based on a project's `feeders.csv`.
+Also sets tape-type and part-pitch from the package map.
+
+```bash
+openpnp-tools assign pnp/feeders.csv
+openpnp-tools assign --reset-unused pnp/feeders.csv  # reset unassigned feeders
+openpnp-tools assign --dry-run pnp/feeders.csv       # preview changes
+```
+
+### `map` — interactive feeder visualization
+
+Generates a self-contained HTML page showing feeder positions, job parts,
+missing feeders, and board outlines.
+
+```bash
+openpnp-tools map -o pnp/feeder-map.html pnp/myboard.job.xml
+```
+
+## Configuration
+
+### Package map (`~/.openpnp2/openpnp-package-map.csv`)
+
+Single source of truth for package metadata, shared across all projects:
+
+```csv
+kicad_footprint,openpnp_package,height,tape_type,part_pitch
+C_0805_2012Metric,C_0805,0.9,WhitePaper,4
+R_0805_2012Metric,R_0805,0.5,WhitePaper,4
+SOT-23,SOT-23,1.1,ClearPlastic,8
+SOIC-8_3.9x4.9mm_P1.27mm,SOIC-8,1.75,ClearPlastic,12
+```
+
+| Column | Description |
+| ------ | ----------- |
+| kicad_footprint | KiCad footprint library name |
+| openpnp_package | Short OpenPnP package name |
+| height | Component height in mm |
+| tape_type | WhitePaper, ClearPlastic, or BlackPlastic |
+| part_pitch | Distance between parts on tape in mm |
+
+### Feeder allocation (`pnp/feeders.csv`)
+
+Per-project file mapping feeder slots to parts:
+
+```csv
+feeder,part
+LV08-01,C_0805-100n
+RV08-02,SOT-23-2N7002
+RH12-01,SOT-223-NCP1117-3.3
+```
+
+## Typical workflow
+
+### First-time project setup
+
+```bash
+make pnp          # generate board.xml + ensure parts
+make feeders      # assign parts to feeder slots
+make feeder-map   # visualize the setup
+```
+
+### After PCB revision
+
+```bash
+make pnp          # regenerate with new placements
+make feeders      # re-assign (new parts flagged as not_found)
+# update feeders.csv for new parts, then:
+make feeders      # assign new parts
+```
+
+### Switching between projects
+
+```bash
+cd other-project/hardware
+make feeders      # reassigns all feeder slots for this project
+# swap tape strips to match, then run OpenPnP
+```
+
+## Makefile integration
+
+```makefile
+pnp:
+	kicad-cli pcb export pos --format csv --side both --units mm \
+		--smd-only --exclude-dnp board.kicad_pcb \
+	| openpnp-tools generate -o pnp -n $(PROJECT)
+	openpnp-tools ensure-parts pnp/$(PROJECT).board.xml
+
+feeders:
+	openpnp-tools assign pnp/feeders.csv
+
+feeder-map:
+	openpnp-tools map -o pnp/feeder-map.html pnp/$(PROJECT).job.xml
+```
 
 ## Build
 
-Requires [Go](https://go.dev/) 1.21+. Pin the version with [Mise](https://mise.jdx.dev/):
+Requires [Go](https://go.dev/) 1.21+:
 
 ```bash
-make build
+make build    # build binary
+make test     # run tests
+make lint     # run linter
 ```
-
-### Available make targets
-
-```
-build          Build the binary
-clean          Clean build artifacts
-lint           Lint source code
-run            Run with example job (set JOB=path/to/job.xml)
-test           Run tests
-```
-
-## Integration with hugo-kicad-site
-
-The generated HTML is self-contained and can be linked from a
-[hugo-kicad-site](https://github.com/laenzlinger/hugo-kicad-site) project page,
-or served as a static file alongside the site.
 
 ## License
 
