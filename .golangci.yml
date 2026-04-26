@@ -1,5 +1,8 @@
 version: "2"
 
+run:
+  timeout: 3m
+
 linters:
   enable:
     - errcheck
@@ -41,9 +44,3 @@ linters:
       line-length: 140
     nakedret:
       max-func-lines: 0
-
-issues:
-  max-same-issues: 50
-  exclude-rules:
-    - path: "_test\\.go"
-      linters: [funlen, dupl]
