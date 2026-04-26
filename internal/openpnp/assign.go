@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/laenzlinger/openpnp-tools/internal/generate"
 )
 
 // FeederAssignment maps a feeder name to a part ID.
@@ -22,9 +24,13 @@ type AssignResult struct {
 	Status     string // "assigned", "unchanged", "not_found"
 }
 
-// AssignFeeders updates part-id attributes in machine.xml based on the given assignments.
-// It uses string replacement to preserve the original XML formatting.
-func AssignFeeders(machinePath string, assignments []FeederAssignment) ([]AssignResult, error) {
+// AssignFeeders updates feeder attributes in machine.xml.
+// Sets part-id, tape-type, and part-pitch based on the package map.
+func AssignFeeders(
+	machinePath string,
+	assignments []FeederAssignment,
+	pkgMap *generate.PackageMap,
+) ([]AssignResult, error) {
 	data, err := os.ReadFile(machinePath)
 	if err != nil {
 		return nil, fmt.Errorf("reading machine.xml: %w", err)
@@ -52,22 +58,31 @@ func AssignFeeders(machinePath string, assignments []FeederAssignment) ([]Assign
 		end += start
 		oldPartID := content[start:end]
 
-		if oldPartID == a.PartID {
-			results = append(results, AssignResult{
-				FeederName: a.FeederName,
-				PartID:     a.PartID,
-				OldPartID:  oldPartID,
-				Status:     "unchanged",
-			})
-			continue
+		changed := oldPartID != a.PartID
+		content = content[:start] + a.PartID + content[end:]
+
+		// Update tape-type and part-pitch from package map
+		pkg := packageFromPartID(a.PartID)
+		if info, ok := pkgMap.LookupByPackage(pkg); ok {
+			if info.TapeType != "" {
+				content = replaceFeederAttr(content, a.FeederName,
+					"tape-type", info.TapeType)
+			}
+			if info.PartPitch > 0 {
+				content = replacePartPitch(content, a.FeederName,
+					info.PartPitch)
+			}
 		}
 
-		content = content[:start] + a.PartID + content[end:]
+		status := "unchanged"
+		if changed {
+			status = "assigned"
+		}
 		results = append(results, AssignResult{
 			FeederName: a.FeederName,
 			PartID:     a.PartID,
 			OldPartID:  oldPartID,
-			Status:     "assigned",
+			Status:     status,
 		})
 	}
 
@@ -75,4 +90,55 @@ func AssignFeeders(machinePath string, assignments []FeederAssignment) ([]Assign
 		return nil, fmt.Errorf("writing machine.xml: %w", err)
 	}
 	return results, nil
+}
+
+// replaceFeederAttr replaces an attribute value on the feeder element.
+func replaceFeederAttr(content, feederName, attr, value string) string {
+	// Find the feeder by name
+	nameMarker := fmt.Sprintf(`name="%s"`, feederName)
+	idx := strings.Index(content, nameMarker)
+	if idx == -1 {
+		return content
+	}
+	// Search for the attribute within a reasonable range after the name
+	searchStart := idx
+	searchEnd := searchStart + 500
+	if searchEnd > len(content) {
+		searchEnd = len(content)
+	}
+	region := content[searchStart:searchEnd]
+
+	attrMarker := fmt.Sprintf(`%s="`, attr)
+	attrIdx := strings.Index(region, attrMarker)
+	if attrIdx == -1 {
+		return content
+	}
+	absStart := searchStart + attrIdx + len(attrMarker)
+	absEnd := absStart + strings.Index(content[absStart:], `"`)
+	return content[:absStart] + value + content[absEnd:]
+}
+
+// replacePartPitch updates the part-pitch value element for a feeder.
+func replacePartPitch(content, feederName string, pitch float64) string {
+	nameMarker := fmt.Sprintf(`name="%s"`, feederName)
+	idx := strings.Index(content, nameMarker)
+	if idx == -1 {
+		return content
+	}
+	// Find <part-pitch value="..." after this feeder
+	searchStart := idx
+	searchEnd := searchStart + 1000
+	if searchEnd > len(content) {
+		searchEnd = len(content)
+	}
+	region := content[searchStart:searchEnd]
+
+	pitchMarker := `<part-pitch value="`
+	pitchIdx := strings.Index(region, pitchMarker)
+	if pitchIdx == -1 {
+		return content
+	}
+	absStart := searchStart + pitchIdx + len(pitchMarker)
+	absEnd := absStart + strings.Index(content[absStart:], `"`)
+	return content[:absStart] + fmt.Sprintf("%.1f", pitch) + content[absEnd:]
 }

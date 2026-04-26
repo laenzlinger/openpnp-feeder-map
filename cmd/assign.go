@@ -6,7 +6,9 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"github.com/laenzlinger/openpnp-tools/internal/generate"
 	"github.com/laenzlinger/openpnp-tools/internal/openpnp"
 	"github.com/spf13/cobra"
 )
@@ -43,7 +45,16 @@ Feeders not listed in the CSV are left unchanged.`,
 			return nil
 		}
 
-		results, err := openpnp.AssignFeeders(machineFlag, assignments)
+		home, _ := os.UserHomeDir()
+		if packageMapFlag == "" {
+			packageMapFlag = filepath.Join(home, ".openpnp2", "openpnp-package-map.csv")
+		}
+		pkgMap, err := generate.LoadPackageMap(packageMapFlag)
+		if err != nil {
+			return fmt.Errorf("loading package map: %w", err)
+		}
+
+		results, err := openpnp.AssignFeeders(machineFlag, assignments, pkgMap)
 		if err != nil {
 			return err
 		}
