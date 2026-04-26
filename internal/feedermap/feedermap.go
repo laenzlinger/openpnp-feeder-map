@@ -10,13 +10,14 @@ import (
 
 // FeederEntry is one row in the feeder map output.
 type FeederEntry struct {
-	Feeder openpnp.Feeder
-	Count  int     // placements in this job
-	StartX float64 // reference hole / pick location X
-	StartY float64 // reference hole / pick location Y
-	EndX   float64 // last hole X (strip feeders)
-	EndY   float64 // last hole Y (strip feeders)
-	HasEnd bool    // true if strip/pushpull with two points
+	Feeder   openpnp.Feeder
+	Count    int     // placements in this job
+	Capacity int     // max parts on strip (strip_length / part_pitch)
+	StartX   float64 // reference hole / pick location X
+	StartY   float64 // reference hole / pick location Y
+	EndX     float64 // last hole X (strip feeders)
+	EndY     float64 // last hole Y (strip feeders)
+	HasEnd   bool    // true if strip/pushpull with two points
 }
 
 // MapData holds everything the HTML template needs.
@@ -39,7 +40,15 @@ type MissingPart struct {
 }
 
 // Build creates the feeder map data by matching job parts to machine feeders.
-func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpnp.Machine) *MapData {
+// calcCapacity returns the max number of parts a strip feeder can hold.
+func calcCapacity(stripLength float64, f *openpnp.Feeder) int {
+	if stripLength <= 0 || f.PartPitch == nil || f.PartPitch.Value <= 0 {
+		return 0
+	}
+	return int(stripLength / f.PartPitch.Value)
+}
+
+func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpnp.Machine, stripLength float64) *MapData {
 	// Index feeders by part-id (only enabled feeders with a position).
 	feederByPart := make(map[string]*openpnp.Feeder)
 	for i := range machine.Feeders {
@@ -79,6 +88,7 @@ func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpn
 			entry.EndY = f.Hole2Location.Y
 			entry.HasEnd = true
 		}
+		entry.Capacity = calcCapacity(stripLength, f)
 		feeders = append(feeders, entry)
 	}
 
@@ -102,6 +112,7 @@ func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpn
 			entry.EndY = f.LastHoleLocation.Y
 			entry.HasEnd = true
 		}
+		entry.Capacity = calcCapacity(stripLength, f)
 		unused = append(unused, entry)
 	}
 

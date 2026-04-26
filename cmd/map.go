@@ -33,7 +33,7 @@ var mapCmd = &cobra.Command{
 			return fmt.Errorf("loading machine: %w", err)
 		}
 
-		data := feedermap.Build(jobParts, boards, machine)
+		data := feedermap.Build(jobParts, boards, machine, stripLengthFlag)
 		data.JobFile = filepath.Base(jobPath)
 		data.StripLength = stripLengthFlag
 

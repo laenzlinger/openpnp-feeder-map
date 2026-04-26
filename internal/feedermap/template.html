@@ -68,7 +68,7 @@ tr:hover td { background: var(--code-bg); cursor: pointer; }
     <tr data-feeder="{{.Feeder.ID}}" onclick="highlight('{{.Feeder.ID}}')">
       <td style="white-space:nowrap">{{.Feeder.Name}}</td>
       <td>{{.Feeder.PartID}}</td>
-      <td><span class="badge badge-count">{{.Count}}</span></td>
+      <td><span class="badge badge-count">{{.Count}}{{if .Capacity}}/{{.Capacity}}{{end}}</span></td>
       <td><span class="badge badge-{{.Feeder.FeederType | lower}}">{{.Feeder.FeederType}}</span>{{if .Feeder.TapeType}} <span class="tape-hint">{{.Feeder.TapeType}}{{if .Feeder.TapeWidth}} {{printf "%.0f" .Feeder.TapeWidth.Value}}mm{{end}}</span>{{end}}</td>
     </tr>
     {{end}}
