@@ -3,6 +3,7 @@
 package feedermap
 
 import (
+	"math"
 	"sort"
 
 	"github.com/laenzlinger/openpnp-tools/internal/openpnp"
@@ -39,7 +40,16 @@ type MissingPart struct {
 	Count  int
 }
 
-// Build creates the feeder map data by matching job parts to machine feeders.
+// pushPullEnd computes the tape end point from pick location, rotation, and strip length.
+// Push-pull feeders define feed direction via location.rotation (0°=+X, 90°=+Y).
+func pushPullEnd(f *openpnp.Feeder, length float64) (float64, float64) {
+	if length <= 0 {
+		length = 120 // default
+	}
+	rad := f.Location.Rotation * math.Pi / 180
+	return f.PickX() + math.Cos(rad)*length, f.PickY() + math.Sin(rad)*length
+}
+
 // calcCapacity returns the max number of parts a strip feeder can hold.
 // Subtracts 2 for cut waste at both ends of the strip.
 func calcCapacity(stripLength float64, f *openpnp.Feeder) int {
@@ -51,6 +61,35 @@ func calcCapacity(stripLength float64, f *openpnp.Feeder) int {
 		return 0
 	}
 	return cap
+}
+
+func collectUnused(machine *openpnp.Machine, usedParts map[string]bool, stripLength float64) []FeederEntry {
+	var unused []FeederEntry
+	for i := range machine.Feeders {
+		f := &machine.Feeders[i]
+		if !f.Enabled || f.PartID == "" || usedParts[f.PartID] {
+			continue
+		}
+		if f.PickX() == 0 && f.PickY() == 0 {
+			continue
+		}
+		entry := FeederEntry{
+			Feeder: *f,
+			StartX: f.PickX(),
+			StartY: f.PickY(),
+		}
+		if f.LastHoleLocation != nil {
+			entry.EndX = f.LastHoleLocation.X
+			entry.EndY = f.LastHoleLocation.Y
+			entry.HasEnd = true
+		} else if f.FeederType() == "PushPull" {
+			entry.EndX, entry.EndY = pushPullEnd(f, stripLength)
+			entry.HasEnd = true
+		}
+		entry.Capacity = calcCapacity(stripLength, f)
+		unused = append(unused, entry)
+	}
+	return unused
 }
 
 func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpnp.Machine, stripLength float64) *MapData {
@@ -88,9 +127,9 @@ func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpn
 			entry.EndX = f.LastHoleLocation.X
 			entry.EndY = f.LastHoleLocation.Y
 			entry.HasEnd = true
-		} else if f.Hole2Location != nil {
-			entry.EndX = f.Hole2Location.X
-			entry.EndY = f.Hole2Location.Y
+		} else if f.FeederType() == "PushPull" {
+			// Push-pull: compute end from pick location + rotation + strip length
+			entry.EndX, entry.EndY = pushPullEnd(f, stripLength)
 			entry.HasEnd = true
 		}
 		entry.Capacity = calcCapacity(stripLength, f)
@@ -98,28 +137,7 @@ func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpn
 	}
 
 	// Collect enabled feeders not used by this job.
-	var unused []FeederEntry
-	for i := range machine.Feeders {
-		f := &machine.Feeders[i]
-		if !f.Enabled || f.PartID == "" || usedParts[f.PartID] {
-			continue
-		}
-		if f.PickX() == 0 && f.PickY() == 0 {
-			continue
-		}
-		entry := FeederEntry{
-			Feeder: *f,
-			StartX: f.PickX(),
-			StartY: f.PickY(),
-		}
-		if f.LastHoleLocation != nil {
-			entry.EndX = f.LastHoleLocation.X
-			entry.EndY = f.LastHoleLocation.Y
-			entry.HasEnd = true
-		}
-		entry.Capacity = calcCapacity(stripLength, f)
-		unused = append(unused, entry)
-	}
+	unused := collectUnused(machine, usedParts, stripLength)
 
 	sort.Slice(feeders, func(i, j int) bool { return feeders[i].Feeder.Name < feeders[j].Feeder.Name })
 	sort.Slice(missing, func(i, j int) bool { return missing[i].PartID < missing[j].PartID })
