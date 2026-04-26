@@ -29,6 +29,7 @@ type MapData struct {
 	BedXMin, BedXMax float64
 	BedYMin, BedYMax float64
 	HasBed           bool
+	StripLength      float64 // default strip feeder slot length in mm
 }
 
 // MissingPart is a job part that has no matching feeder.

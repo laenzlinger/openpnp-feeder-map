@@ -13,6 +13,7 @@ import (
 )
 
 var mapOutputFlag string
+var stripLengthFlag float64
 
 var mapCmd = &cobra.Command{
 	Use:   "map <job.xml>",
@@ -34,6 +35,7 @@ var mapCmd = &cobra.Command{
 
 		data := feedermap.Build(jobParts, boards, machine)
 		data.JobFile = filepath.Base(jobPath)
+		data.StripLength = stripLengthFlag
 
 		f, err := os.Create(mapOutputFlag)
 		if err != nil {
@@ -54,4 +56,5 @@ var mapCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(mapCmd)
 	mapCmd.Flags().StringVarP(&mapOutputFlag, "output", "o", "feeder-map.html", "output HTML file path")
+	mapCmd.Flags().Float64Var(&stripLengthFlag, "strip-length", 120, "strip feeder slot length in mm")
 }
