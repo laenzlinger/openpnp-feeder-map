@@ -152,7 +152,7 @@ func ParseKiCadCSV(r io.Reader, pkgMap *PackageMap) ([]Placement, error) {
 }
 
 // WriteBoardXML writes an OpenPnP board XML file.
-func WriteBoardXML(placements []Placement, path, name string) error {
+func WriteBoardXML(placements []Placement, path, name string, width, height float64) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return err
@@ -165,7 +165,7 @@ func WriteBoardXML(placements []Placement, path, name string) error {
 		}
 	}
 	w("<openpnp-board version=\"1.1\" name=\"%s\">\n", name)
-	w("   <dimensions units=\"Millimeters\" x=\"0.0\" y=\"0.0\" z=\"1.6\" rotation=\"0.0\"/>\n")
+	w("   <dimensions units=\"Millimeters\" x=\"%.1f\" y=\"%.1f\" z=\"1.6\" rotation=\"0.0\"/>\n", width, height)
 	w("   <placements>\n")
 	for _, p := range placements {
 		side := strings.ToUpper(p.Side[:1]) + strings.ToLower(p.Side[1:])

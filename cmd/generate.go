@@ -15,6 +15,8 @@ var (
 	generateOutputDir string
 	generateBoardName string
 	packageMapFlag    string
+	boardWidth        float64
+	boardHeight       float64
 )
 
 var generateCmd = &cobra.Command{
@@ -60,7 +62,7 @@ Example:
 		}
 
 		boardPath := filepath.Join(generateOutputDir, generateBoardName+".board.xml")
-		if err := generate.WriteBoardXML(placements, boardPath, generateBoardName); err != nil {
+		if err := generate.WriteBoardXML(placements, boardPath, generateBoardName, boardWidth, boardHeight); err != nil {
 			return fmt.Errorf("writing board XML: %w", err)
 		}
 
@@ -80,6 +82,8 @@ func init() {
 	rootCmd.AddCommand(generateCmd)
 	generateCmd.Flags().StringVarP(&generateOutputDir, "output-dir", "o", "pnp", "output directory")
 	generateCmd.Flags().StringVarP(&generateBoardName, "name", "n", "granit", "board name (used for filenames)")
+	generateCmd.Flags().Float64Var(&boardWidth, "board-width", 0, "board width in mm")
+	generateCmd.Flags().Float64Var(&boardHeight, "board-height", 0, "board height in mm")
 	generateCmd.Flags().StringVar(&packageMapFlag, "package-map", "",
 		"path to package map CSV (default: ~/.openpnp2/openpnp-package-map.csv)")
 }
