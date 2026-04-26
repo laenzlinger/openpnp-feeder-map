@@ -16,6 +16,7 @@ import (
 var dryRunFlag bool
 var resetUnusedFlag bool
 var dummyPartFlag string
+var assignStripLength float64
 
 var assignCmd = &cobra.Command{
 	Use:   "assign <feeders.csv>",
@@ -56,7 +57,7 @@ Feeders not listed in the CSV are left unchanged.`,
 			return fmt.Errorf("loading package map: %w", err)
 		}
 
-		results, err := openpnp.AssignFeeders(machineFlag, assignments, pkgMap, resetUnusedFlag, dummyPartFlag)
+		results, err := openpnp.AssignFeeders(machineFlag, assignments, pkgMap, resetUnusedFlag, dummyPartFlag, assignStripLength)
 		if err != nil {
 			return err
 		}
@@ -90,6 +91,7 @@ func init() {
 		"reset feeders not in CSV to dummy part")
 	assignCmd.Flags().StringVar(&dummyPartFlag, "dummy-part", "CALIBRATION-DUMMY",
 		"part-id to use when resetting unused feeders")
+	assignCmd.Flags().Float64Var(&assignStripLength, "strip-length", 120, "strip feeder slot length in mm")
 	assignCmd.Flags().BoolVarP(&dryRunFlag, "dry-run", "n", false,
 		"show what would be changed without modifying machine.xml")
 }

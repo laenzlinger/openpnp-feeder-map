@@ -33,6 +33,7 @@ func AssignFeeders(
 	pkgMap *generate.PackageMap,
 	resetUnused bool,
 	dummyPartID string,
+	stripLength float64,
 ) ([]AssignResult, error) {
 	data, err := os.ReadFile(machinePath)
 	if err != nil {
@@ -67,14 +68,20 @@ func AssignFeeders(
 		content = content[:start] + a.PartID + content[end:]
 
 		pkg := packageFromPartID(a.PartID)
-		if info, ok := pkgMap.LookupByPackage(pkg); ok {
-			if info.TapeType != "" {
+		info, ok := pkgMap.LookupByPackage(pkg)
+		if ok && info.TapeType != "" {
+			content = replaceFeederAttr(content, a.FeederName,
+				"tape-type", info.TapeType)
+		}
+		if ok && info.PartPitch > 0 {
+			content = replacePartPitch(content, a.FeederName,
+				info.PartPitch)
+		}
+		if ok && info.PartPitch > 0 && stripLength > 0 {
+			cap := int(stripLength/info.PartPitch) - 2
+			if cap > 0 {
 				content = replaceFeederAttr(content, a.FeederName,
-					"tape-type", info.TapeType)
-			}
-			if info.PartPitch > 0 {
-				content = replacePartPitch(content, a.FeederName,
-					info.PartPitch)
+					"max-feed-count", fmt.Sprintf("%d", cap))
 			}
 		}
 
