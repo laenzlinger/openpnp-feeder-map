@@ -115,22 +115,27 @@ func WriteBoardXML(placements []Placement, path, name string) error {
 	}
 	defer func() { _ = f.Close() }()
 
-	fmt.Fprintf(f, "<openpnp-board version=\"1.1\" name=\"%s\">\n", name)
-	fmt.Fprintf(f, "   <dimensions units=\"Millimeters\" x=\"0.0\" y=\"0.0\" z=\"1.6\" rotation=\"0.0\"/>\n")
-	fmt.Fprintf(f, "   <placements>\n")
+	w := func(format string, args ...any) {
+		if err == nil {
+			_, err = fmt.Fprintf(f, format, args...)
+		}
+	}
+	w("<openpnp-board version=\"1.1\" name=\"%s\">\n", name)
+	w("   <dimensions units=\"Millimeters\" x=\"0.0\" y=\"0.0\" z=\"1.6\" rotation=\"0.0\"/>\n")
+	w("   <placements>\n")
 	for _, p := range placements {
 		side := strings.ToUpper(p.Side[:1]) + strings.ToLower(p.Side[1:])
-		fmt.Fprintf(f, "      <placement version=\"1.4\" side=\"%s\" id=\"%s\" part-id=\"%s\" type=\"%s\" enabled=\"%t\">\n",
+		w("      <placement version=\"1.4\" side=\"%s\" id=\"%s\" part-id=\"%s\" type=\"%s\" enabled=\"%t\">\n",
 			side, p.Ref, p.PartID, p.Type, p.Enabled)
-		fmt.Fprintf(f, "         <location units=\"Millimeters\" x=\"%s\" y=\"%s\" z=\"0.0\" rotation=\"%s\"/>\n",
+		w("         <location units=\"Millimeters\" x=\"%s\" y=\"%s\" z=\"0.0\" rotation=\"%s\"/>\n",
 			p.X, p.Y, p.Rot)
-		fmt.Fprintf(f, "      </placement>\n")
+		w("      </placement>\n")
 	}
-	fmt.Fprintf(f, "   </placements>\n")
-	fmt.Fprintf(f, "   <fiducials/>\n")
-	fmt.Fprintf(f, "   <solder-paste-pads/>\n")
-	fmt.Fprintf(f, "</openpnp-board>\n")
-	return nil
+	w("   </placements>\n")
+	w("   <fiducials/>\n")
+	w("   <solder-paste-pads/>\n")
+	w("</openpnp-board>\n")
+	return err
 }
 
 // WritePosFile writes a KiCad-compatible ASCII position file with remapped packages.
@@ -141,16 +146,21 @@ func WritePosFile(placements []Placement, path string) error {
 	}
 	defer func() { _ = f.Close() }()
 
-	fmt.Fprintf(f, "### Footprint positions ###\n")
-	fmt.Fprintf(f, "## Unit = mm, Angle = deg.\n")
-	fmt.Fprintf(f, "## Side : All\n")
-	fmt.Fprintf(f, "# Ref     Val                          Package                                    PosX       PosY       Rot  Side\n")
+	w := func(format string, args ...any) {
+		if err == nil {
+			_, err = fmt.Fprintf(f, format, args...)
+		}
+	}
+	w("### Footprint positions ###\n")
+	w("## Unit = mm, Angle = deg.\n")
+	w("## Side : All\n")
+	w("# Ref     Val                          Package                                    PosX       PosY       Rot  Side\n")
 	for _, p := range placements {
-		fmt.Fprintf(f, "%-10s%-29s%-43s%10s%11s%10s  %s\n",
+		w("%-10s%-29s%-43s%10s%11s%10s  %s\n",
 			p.Ref, p.Val, p.Package, p.X, p.Y, p.Rot, p.Side)
 	}
-	fmt.Fprintf(f, "## End\n")
-	return nil
+	w("## End\n")
+	return err
 }
 
 // Stats returns placement statistics.
