@@ -39,6 +39,7 @@ tr:hover td { background: var(--code-bg); cursor: pointer; }
 .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .feeder-group { cursor: pointer; }
 .feeder-group:hover .feeder-line { stroke-width: 4; }
+.feeder-group:hover .tape-outline { stroke-width: 2; stroke-opacity: 0.8 !important; }
 .feeder-group:hover .feeder-dot { r: 5; }
 .feeder-label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 10px; fill: var(--primary); pointer-events: none; }
 .tooltip { position: absolute; background: var(--entry); border: 1px solid var(--border); padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.8rem; pointer-events: none; display: none; z-index: 10; max-width: 300px; }
@@ -223,17 +224,17 @@ feeders.forEach(f => {
     if (len > 0) {
       let nx = -dy/len, ny = dx/len;
       let hw = f.tapeW / 2;
-      let poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-      let pts = [
-        [f.x1 + nx*hw, -(f.y1 + ny*hw)],
-        [f.x2 + nx*hw, -(f.y2 + ny*hw)],
-        [f.x2 - nx*hw, -(f.y2 - ny*hw)],
-        [f.x1 - nx*hw, -(f.y1 - ny*hw)],
-      ];
-      poly.setAttribute('points', pts.map(p => p.join(',')).join(' '));
-      poly.setAttribute('fill', color); poly.setAttribute('fill-opacity', '0.08');
+      let poly = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      let p1 = [f.x1 + nx*hw, -(f.y1 + ny*hw)];
+      let p2 = [f.x2 + nx*hw, -(f.y2 + ny*hw)];
+      let p3 = [f.x2 - nx*hw, -(f.y2 - ny*hw)];
+      let p4 = [f.x1 - nx*hw, -(f.y1 - ny*hw)];
+      // Open-ended: draw 3 sides (start cap + both sides, no end cap)
+      poly.setAttribute('d', `M${p2[0]},${p2[1]} L${p1[0]},${p1[1]} L${p4[0]},${p4[1]} L${p3[0]},${p3[1]}`);
+      poly.setAttribute('fill', color); poly.setAttribute('fill-opacity', '0.05');
       poly.setAttribute('stroke', color); poly.setAttribute('stroke-width', '0.5');
       poly.setAttribute('stroke-opacity', opacity == '1' ? '0.4' : '0.2');
+      poly.classList.add('tape-outline');
       g.appendChild(poly);
 
       // Needed tape length for job
@@ -257,12 +258,7 @@ feeders.forEach(f => {
   }
 
   if (f.hasEnd) {
-    let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', f.x1); line.setAttribute('y1', -f.y1);
-    line.setAttribute('x2', f.x2); line.setAttribute('y2', -f.y2);
-    line.setAttribute('stroke', color); line.setAttribute('stroke-width', '2');
-    line.setAttribute('opacity', opacity); line.classList.add('feeder-line');
-    g.appendChild(line);
+    // No center line — tape outline is enough
   }
 
   let dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -276,18 +272,29 @@ feeders.forEach(f => {
   if (f.hasEnd) {
     let dx = f.x2 - f.x1, dy = f.y2 - f.y1;
     let len = Math.sqrt(dx*dx + dy*dy) || 1;
-    let nx = -dy/len, ny = dx/len; // perpendicular
-    text.setAttribute('x', f.x1 + nx * labelOffset);
-    text.setAttribute('y', -(f.y1 + ny * labelOffset));
+    let mx = f.x2, my = f.y2;
+    text.setAttribute('x', mx);
+    text.setAttribute('y', -my);
+    text.setAttribute('dominant-baseline', 'central');
+    // Anchor so text extends away from the strip (outward from open end)
+    let feedsUp = f.y2 > f.y1;
+    let feedsRight = f.x2 > f.x1;
+    let isVertical = Math.abs(dy) > Math.abs(dx);
+    let anchor = 'start';
+    if (isVertical && feedsUp) anchor = 'end';
+    if (!isVertical && feedsRight) anchor = 'start';
+    if (!isVertical && !feedsRight) anchor = 'end';
+    text.setAttribute('text-anchor', anchor);
     let angle = Math.atan2(-(f.y2 - f.y1), f.x2 - f.x1) * 180 / Math.PI;
-    // Keep text readable (not upside down)
+    if (Math.abs(angle - 90) < 10 || Math.abs(angle + 90) < 10) angle = 90;
+    if (Math.abs(angle) < 10 || Math.abs(angle - 180) < 10) angle = 0;
     if (angle > 91 || angle < -91) angle += 180;
-    text.setAttribute('transform', `rotate(${angle}, ${f.x1 + nx * labelOffset}, ${-(f.y1 + ny * labelOffset)})`);
+    text.setAttribute('transform', `rotate(${angle}, ${mx}, ${-my})`);
   } else {
     text.setAttribute('x', f.x1 + labelOffset); text.setAttribute('y', -f.y1);
   }
   text.classList.add('feeder-label'); text.setAttribute('opacity', opacity);
-  text.textContent = f.name;
+  text.textContent = f.part || f.name;
   g.appendChild(text);
 
   g.addEventListener('mouseenter', e => showTooltip(e, f));
