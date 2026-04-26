@@ -26,10 +26,13 @@ type AssignResult struct {
 
 // AssignFeeders updates feeder attributes in machine.xml.
 // Sets part-id, tape-type, and part-pitch based on the package map.
+// If resetUnused is true, feeders not in the assignments list are reset to dummyPartID.
 func AssignFeeders(
 	machinePath string,
 	assignments []FeederAssignment,
 	pkgMap *generate.PackageMap,
+	resetUnused bool,
+	dummyPartID string,
 ) ([]AssignResult, error) {
 	data, err := os.ReadFile(machinePath)
 	if err != nil {
@@ -38,7 +41,9 @@ func AssignFeeders(
 	content := string(data)
 	var results []AssignResult
 
+	assigned := make(map[string]bool)
 	for _, a := range assignments {
+		assigned[a.FeederName] = true
 		marker := fmt.Sprintf(`name="%s" enabled="true" part-id="`, a.FeederName)
 		idx := strings.Index(content, marker)
 		if idx == -1 {
@@ -61,7 +66,6 @@ func AssignFeeders(
 		changed := oldPartID != a.PartID
 		content = content[:start] + a.PartID + content[end:]
 
-		// Update tape-type and part-pitch from package map
 		pkg := packageFromPartID(a.PartID)
 		if info, ok := pkgMap.LookupByPackage(pkg); ok {
 			if info.TapeType != "" {
@@ -86,10 +90,72 @@ func AssignFeeders(
 		})
 	}
 
+	if resetUnused {
+		results = append(results,
+			resetUnassignedFeeders(&content, assigned, dummyPartID)...)
+	}
+
 	if err := os.WriteFile(machinePath, []byte(content), 0o600); err != nil {
 		return nil, fmt.Errorf("writing machine.xml: %w", err)
 	}
 	return results, nil
+}
+
+// resetUnassignedFeeders resets feeders not in the assigned set to dummyPartID.
+func resetUnassignedFeeders(
+	content *string,
+	assigned map[string]bool,
+	dummyPartID string,
+) []AssignResult {
+	var results []AssignResult
+	offset := 0
+	for {
+		pattern := `enabled="true" part-id="`
+		idx := strings.Index((*content)[offset:], pattern)
+		if idx == -1 {
+			break
+		}
+		absIdx := offset + idx
+
+		// Find the feeder name before this point
+		nameEnd := strings.LastIndex((*content)[:absIdx], `" `)
+		if nameEnd == -1 {
+			offset = absIdx + len(pattern)
+			continue
+		}
+		nameMarker := `name="`
+		nameStart := strings.LastIndex((*content)[:nameEnd], nameMarker)
+		if nameStart == -1 {
+			offset = absIdx + len(pattern)
+			continue
+		}
+		nameStart += len(nameMarker)
+		feederName := (*content)[nameStart:nameEnd]
+
+		// Skip if already assigned
+		if assigned[feederName] {
+			offset = absIdx + len(pattern)
+			continue
+		}
+
+		// Get current part-id
+		partStart := absIdx + len(pattern)
+		partEnd := partStart + strings.Index((*content)[partStart:], `"`)
+		oldPartID := (*content)[partStart:partEnd]
+
+		if oldPartID != dummyPartID {
+			*content = (*content)[:partStart] + dummyPartID + (*content)[partEnd:]
+			results = append(results, AssignResult{
+				FeederName: feederName,
+				PartID:     dummyPartID,
+				OldPartID:  oldPartID,
+				Status:     "reset",
+			})
+		}
+
+		offset = partStart + len(dummyPartID) + 1
+	}
+	return results
 }
 
 // replaceFeederAttr replaces an attribute value on the feeder element.

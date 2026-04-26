@@ -14,6 +14,8 @@ import (
 )
 
 var dryRunFlag bool
+var resetUnusedFlag bool
+var dummyPartFlag string
 
 var assignCmd = &cobra.Command{
 	Use:   "assign <feeders.csv>",
@@ -54,12 +56,12 @@ Feeders not listed in the CSV are left unchanged.`,
 			return fmt.Errorf("loading package map: %w", err)
 		}
 
-		results, err := openpnp.AssignFeeders(machineFlag, assignments, pkgMap)
+		results, err := openpnp.AssignFeeders(machineFlag, assignments, pkgMap, resetUnusedFlag, dummyPartFlag)
 		if err != nil {
 			return err
 		}
 
-		assigned, unchanged, notFound := 0, 0, 0
+		assigned, unchanged, notFound, reset := 0, 0, 0, 0
 		for _, r := range results {
 			switch r.Status {
 			case "assigned":
@@ -71,15 +73,23 @@ Feeders not listed in the CSV are left unchanged.`,
 			case "not_found":
 				fmt.Printf("  ? %s: not found in machine.xml\n", r.FeederName)
 				notFound++
+			case "reset":
+				fmt.Printf("  ✗ %s: %s → %s\n", r.FeederName, r.OldPartID, r.PartID)
+				reset++
 			}
 		}
-		fmt.Printf("\n%d assigned, %d unchanged, %d not found\n", assigned, unchanged, notFound)
+		fmt.Printf("\n%d assigned, %d unchanged, %d not found, %d reset\n",
+			assigned, unchanged, notFound, reset)
 		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(assignCmd)
+	assignCmd.Flags().BoolVarP(&resetUnusedFlag, "reset-unused", "r", false,
+		"reset feeders not in CSV to dummy part")
+	assignCmd.Flags().StringVar(&dummyPartFlag, "dummy-part", "CALIBRATION-DUMMY",
+		"part-id to use when resetting unused feeders")
 	assignCmd.Flags().BoolVarP(&dryRunFlag, "dry-run", "n", false,
 		"show what would be changed without modifying machine.xml")
 }
