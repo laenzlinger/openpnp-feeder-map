@@ -38,6 +38,7 @@ type PackageInfo struct {
 	Height    float64
 	TapeType  string  // WhitePaper, ClearPlastic, BlackPlastic
 	PartPitch float64 // mm between parts on tape
+	TapeWidth int     // tape width in mm (8, 12, 16, ...)
 }
 
 // PackageMap maps KiCad footprints to OpenPnP package info.
@@ -80,6 +81,7 @@ func LoadPackageMap(path string) (*PackageMap, error) {
 	m := &PackageMap{byFootprint: make(map[string]PackageInfo)}
 	reader := csv.NewReader(f)
 	reader.Comment = '#'
+	reader.FieldsPerRecord = -1
 	for {
 		row, err := reader.Read()
 		if err == io.EOF {
@@ -100,6 +102,9 @@ func LoadPackageMap(path string) (*PackageMap, error) {
 		}
 		if len(row) > 4 && row[4] != "" {
 			info.PartPitch, _ = strconv.ParseFloat(row[4], 64)
+		}
+		if len(row) > 5 && row[5] != "" {
+			info.TapeWidth, _ = strconv.Atoi(row[5])
 		}
 		m.byFootprint[row[0]] = info
 	}

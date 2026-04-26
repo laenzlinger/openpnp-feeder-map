@@ -59,20 +59,24 @@ openpnp-tools map -o pnp/feeder-map.html pnp/myboard.job.xml
 Single source of truth for package metadata, shared across all projects:
 
 ```csv
-kicad_footprint,openpnp_package,height,tape_type,part_pitch
-C_0805_2012Metric,C_0805,0.9,WhitePaper,4
-R_0805_2012Metric,R_0805,0.5,WhitePaper,4
-SOT-23,SOT-23,1.1,ClearPlastic,8
-SOIC-8_3.9x4.9mm_P1.27mm,SOIC-8,1.75,ClearPlastic,12
+kicad_footprint,openpnp_package,height,tape_type,part_pitch,tape_width
+C_0805_2012Metric,C_0805,0.9,WhitePaper,4,8
+R_0805_2012Metric,R_0805,0.5,WhitePaper,4,8
+SOT-23,SOT-23,1.1,ClearPlastic,8,8
+SOIC-8_3.9x4.9mm_P1.27mm,SOIC-8,1.75,ClearPlastic,12,12
 ```
 
 | Column | Description |
 | ------ | ----------- |
-| kicad_footprint | KiCad footprint library name |
-| openpnp_package | Short OpenPnP package name |
-| height | Component height in mm |
-| tape_type | WhitePaper, ClearPlastic, or BlackPlastic |
-| part_pitch | Distance between parts on tape in mm |
+| `kicad_footprint` | KiCad footprint library name (exact match) |
+| `openpnp_package` | Short OpenPnP package name |
+| `height` | Component height in mm (set on parts in `parts.xml`) |
+| `tape_type` | `WhitePaper`, `ClearPlastic`, or `BlackPlastic` (set on feeders in `machine.xml`) |
+| `part_pitch` | Distance between parts on tape in mm (set on feeders in `machine.xml`) |
+| `tape_width` | Tape width in mm: 8, 12, 16 (set as `tape-specification` on packages in `packages.xml`) |
+
+Lines starting with `#` are comments. Rows with empty tape columns are hand-place
+components (connectors, switches) — they are mapped but get no feeder metadata.
 
 ### Feeder allocation (`pnp/feeders.csv`)
 
@@ -82,8 +86,19 @@ Per-project file mapping feeder slots to parts:
 feeder,part
 LV08-01,C_0805-100n
 RV08-02,SOT-23-2N7002
-RH12-01,SOT-223-NCP1117-3.3
+RH12-01,SOT-223-NCP1117-3.3_SOT223
 ```
+
+| Column | Description |
+| ------ | ----------- |
+| `feeder` | Feeder slot name: `{L/R}{V/H}{width}-{slot}` zero-padded (e.g. `LV08-01`, `RH12-03`) |
+| `part` | Part ID: `{Package}-{Value}` matching the board XML (e.g. `C_0805-100n`) |
+
+Feeder naming convention:
+- `L`/`R` = left/right side of machine bed
+- `V`/`H` = vorne (front) / hinten (back)
+- Width = tape width in mm (08, 12, 16)
+- Slot = position number, zero-padded
 
 ## Typical workflow
 

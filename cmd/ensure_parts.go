@@ -66,12 +66,15 @@ exist in parts.xml and packages.xml with correct metadata from the package map.`
 		}
 
 		// Ensure packages first
-		pkgResult, err := openpnp.EnsurePackages(packagesFileFlag, packageIDs)
+		pkgResult, err := openpnp.EnsurePackages(packagesFileFlag, packageIDs, pkgMap)
 		if err != nil {
 			return err
 		}
 		for _, id := range pkgResult.Created {
 			fmt.Printf("  + package: %s\n", id)
+		}
+		for _, id := range pkgResult.Updated {
+			fmt.Printf("  ~ package: %s (tape-specification updated)\n", id)
 		}
 
 		// Then ensure parts
