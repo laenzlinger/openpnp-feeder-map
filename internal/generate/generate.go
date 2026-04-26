@@ -33,7 +33,7 @@ type PlacementStats struct {
 
 // LoadPackageMap reads a CSV mapping KiCad footprints to OpenPnP package names.
 func LoadPackageMap(path string) (map[string]string, error) {
-	f, err := os.Open(path)
+	f, err := os.Open(path) //nolint:gosec // path from CLI argument
 	if err != nil {
 		return nil, err
 	}

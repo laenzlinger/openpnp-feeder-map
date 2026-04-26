@@ -92,7 +92,8 @@ func EnsureParts(partsPath string, partIDs []string) (*EnsurePartsResult, error)
 
 		pkg := packageFromPartID(partID)
 		height := heightForPackage(pkg)
-		entry := fmt.Sprintf(`   <part id="%s" height-units="Millimeters" height="%.1f" package-id="%s" speed="1.0" pick-retry-count="0"/>`,
+		entry := fmt.Sprintf(`   <part id="%s" height-units="Millimeters"`+
+			` height="%.1f" package-id="%s" speed="1.0" pick-retry-count="0"/>`,
 			partID, height, pkg)
 
 		// Insert before closing tag

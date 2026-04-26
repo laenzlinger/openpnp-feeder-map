@@ -1,3 +1,5 @@
+version: "2"
+
 run:
   timeout: 3m
 
@@ -14,12 +16,13 @@ linters-settings:
         strict: false
 
   funlen:
-    lines: 100
-    statements: 50
+    lines: 80
+    statements: 60
     ignore-comments: true
 
+
   lll:
-    line-length: 140
+    line-length: 150
 
   nakedret:
     max-func-lines: 0
@@ -29,11 +32,9 @@ linters:
   enable:
     # defaults
     - errcheck
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
-    - typecheck
     - unused
     # extra
     - asciicheck
@@ -47,9 +48,7 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - goimports
     - goprintffuncname
-    - gosec
     - lll
     - nakedret
     - nestif

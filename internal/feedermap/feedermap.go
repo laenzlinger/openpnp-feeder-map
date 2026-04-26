@@ -38,6 +38,7 @@ type MissingPart struct {
 }
 
 // Build creates the feeder map data by matching job parts to machine feeders.
+//nolint:funlen // complex matching logic
 func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpnp.Machine) *MapData {
 	// Index feeders by part-id (only enabled feeders with a position).
 	feederByPart := make(map[string]*openpnp.Feeder)

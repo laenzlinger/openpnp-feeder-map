@@ -55,7 +55,7 @@ Example:
 			return fmt.Errorf("parsing CSV: %w", err)
 		}
 
-		if err := os.MkdirAll(generateOutputDir, 0o755); err != nil {
+		if err := os.MkdirAll(generateOutputDir, 0o750); err != nil {
 			return fmt.Errorf("creating output dir: %w", err)
 		}
 
