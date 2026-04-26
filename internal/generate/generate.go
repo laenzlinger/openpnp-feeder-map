@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -18,7 +19,7 @@ type Placement struct {
 	Val     string
 	KiCadFP string // original KiCad footprint
 	Package string // remapped OpenPnP package
-	PartID  string // {KiCadFP}-{Val} for part matching
+	PartID  string // {Package}-{Val} for part matching
 	X, Y    string
 	Rot     string
 	Side    string
@@ -31,15 +32,52 @@ type PlacementStats struct {
 	Total, Active, Fiducials, Disabled int
 }
 
-// LoadPackageMap reads a CSV mapping KiCad footprints to OpenPnP package names.
-func LoadPackageMap(path string) (map[string]string, error) {
-	f, err := os.Open(path) //nolint:gosec // path from CLI argument
+// PackageInfo holds metadata for an OpenPnP package.
+type PackageInfo struct {
+	Package   string
+	Height    float64
+	TapeType  string  // WhitePaper, ClearPlastic, BlackPlastic
+	PartPitch float64 // mm between parts on tape
+}
+
+// PackageMap maps KiCad footprints to OpenPnP package info.
+type PackageMap struct {
+	byFootprint map[string]PackageInfo
+}
+
+// Lookup returns the package info for a KiCad footprint.
+func (m *PackageMap) Lookup(kicadFP string) (PackageInfo, bool) {
+	info, ok := m.byFootprint[kicadFP]
+	return info, ok
+}
+
+// PackageName returns the remapped package name, or the original if unmapped.
+func (m *PackageMap) PackageName(kicadFP string) string {
+	if info, ok := m.byFootprint[kicadFP]; ok {
+		return info.Package
+	}
+	return kicadFP
+}
+
+// LookupByPackage returns the package info by OpenPnP package name.
+func (m *PackageMap) LookupByPackage(pkg string) (PackageInfo, bool) {
+	for _, info := range m.byFootprint {
+		if info.Package == pkg {
+			return info, true
+		}
+	}
+	return PackageInfo{}, false
+}
+
+// LoadPackageMap reads the extended package map CSV.
+func LoadPackageMap(path string) (*PackageMap, error) {
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = f.Close() }()
 
-	m := make(map[string]string)
+	m := &PackageMap{byFootprint: make(map[string]PackageInfo)}
 	reader := csv.NewReader(f)
 	reader.Comment = '#'
 	for {
@@ -50,17 +88,28 @@ func LoadPackageMap(path string) (map[string]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		if len(row) >= 2 && row[0] != "kicad_footprint" {
-			m[row[0]] = row[1]
+		if len(row) < 2 || row[0] == "kicad_footprint" {
+			continue
 		}
+		info := PackageInfo{Package: row[1]}
+		if len(row) > 2 && row[2] != "" {
+			info.Height, _ = strconv.ParseFloat(row[2], 64)
+		}
+		if len(row) > 3 {
+			info.TapeType = row[3]
+		}
+		if len(row) > 4 && row[4] != "" {
+			info.PartPitch, _ = strconv.ParseFloat(row[4], 64)
+		}
+		m.byFootprint[row[0]] = info
 	}
 	return m, nil
 }
 
-// ParseKiCadCSV reads a KiCad position CSV and returns placements with remapped packages.
-func ParseKiCadCSV(r io.Reader, pkgMap map[string]string) ([]Placement, error) {
+// ParseKiCadCSV reads a KiCad position CSV and returns placements.
+func ParseKiCadCSV(r io.Reader, pkgMap *PackageMap) ([]Placement, error) {
 	reader := csv.NewReader(r)
-	reader.FieldsPerRecord = -1 // allow variable field count
+	reader.FieldsPerRecord = -1
 	records, err := reader.ReadAll()
 	if err != nil {
 		return nil, fmt.Errorf("reading CSV: %w", err)
@@ -68,10 +117,7 @@ func ParseKiCadCSV(r io.Reader, pkgMap map[string]string) ([]Placement, error) {
 
 	var placements []Placement
 	for i, row := range records {
-		if i == 0 {
-			continue // skip header
-		}
-		if len(row) < 7 {
+		if i == 0 || len(row) < 7 {
 			continue
 		}
 		ref := strings.TrimSpace(row[0])
@@ -81,13 +127,9 @@ func ParseKiCadCSV(r io.Reader, pkgMap map[string]string) ([]Placement, error) {
 			continue
 		}
 
-		pkg := kicadFP
-		if mapped, ok := pkgMap[kicadFP]; ok {
-			pkg = mapped
-		}
+		pkg := pkgMap.PackageName(kicadFP)
 
 		ptype := "Placement"
-		enabled := true
 		if strings.Contains(strings.ToLower(kicadFP), "fiducial") {
 			ptype = placementTypeFiducial
 		}
@@ -103,7 +145,7 @@ func ParseKiCadCSV(r io.Reader, pkgMap map[string]string) ([]Placement, error) {
 			Rot:     strings.TrimSpace(row[5]),
 			Side:    strings.TrimSpace(row[6]),
 			Type:    ptype,
-			Enabled: enabled,
+			Enabled: true,
 		})
 	}
 	return placements, nil
@@ -140,7 +182,7 @@ func WriteBoardXML(placements []Placement, path, name string) error {
 	return err
 }
 
-// WritePosFile writes a KiCad-compatible ASCII position file with remapped packages.
+// WritePosFile writes a KiCad-compatible ASCII position file.
 func WritePosFile(placements []Placement, path string) error {
 	f, err := os.Create(path)
 	if err != nil {

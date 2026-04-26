@@ -13,11 +13,11 @@ C1,100n,C_0805_2012Metric,10.0,-20.0,90.0,top
 FID1,Fiducial,Fiducial_1mm_Mask2mm,5.0,-5.0,0.0,top
 U1,ASM1061,QFN50P700X700X90-49N-D,30.0,-40.0,-45.0,top`
 
-	pkgMap := map[string]string{
-		"C_0805_2012Metric":      "C_0805",
-		"QFN50P700X700X90-49N-D": "QFN-48-7x7",
-		"Fiducial_1mm_Mask2mm":   "FIDUCIAL-1X2",
-	}
+	pkgMap := &PackageMap{byFootprint: map[string]PackageInfo{
+		"C_0805_2012Metric":      {Package: "C_0805"},
+		"QFN50P700X700X90-49N-D": {Package: "QFN-48-7x7"},
+		"Fiducial_1mm_Mask2mm":   {Package: "FIDUCIAL-1X2"},
+	}}
 
 	placements, err := ParseKiCadCSV(strings.NewReader(csv), pkgMap)
 	if err != nil {
@@ -57,7 +57,7 @@ func TestParseKiCadCSV_UnmappedFootprint(t *testing.T) {
 	csv := `Ref,Val,Package,PosX,PosY,Rot,Side
 J1,USB_C,SomeUnknownFootprint,10.0,-20.0,0.0,top`
 
-	placements, err := ParseKiCadCSV(strings.NewReader(csv), map[string]string{})
+	placements, err := ParseKiCadCSV(strings.NewReader(csv), &PackageMap{byFootprint: map[string]PackageInfo{}})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestParseKiCadCSV_TrailingJunk(t *testing.T) {
 C1,100n,C_0805,10.0,-20.0,90.0,top
 Wrote position data,,,,,,`
 
-	placements, err := ParseKiCadCSV(strings.NewReader(csv), map[string]string{})
+	placements, err := ParseKiCadCSV(strings.NewReader(csv), &PackageMap{byFootprint: map[string]PackageInfo{}})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
