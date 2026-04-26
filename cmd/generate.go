@@ -80,5 +80,6 @@ func init() {
 	rootCmd.AddCommand(generateCmd)
 	generateCmd.Flags().StringVarP(&generateOutputDir, "output-dir", "o", "pnp", "output directory")
 	generateCmd.Flags().StringVarP(&generateBoardName, "name", "n", "granit", "board name (used for filenames)")
-	generateCmd.Flags().StringVar(&packageMapFlag, "package-map", "", "path to package map CSV (default: ~/.openpnp2/openpnp-package-map.csv)")
+	generateCmd.Flags().StringVar(&packageMapFlag, "package-map", "",
+		"path to package map CSV (default: ~/.openpnp2/openpnp-package-map.csv)")
 }

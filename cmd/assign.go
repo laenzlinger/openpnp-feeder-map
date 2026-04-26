@@ -69,7 +69,8 @@ Feeders not listed in the CSV are left unchanged.`,
 
 func init() {
 	rootCmd.AddCommand(assignCmd)
-	assignCmd.Flags().BoolVarP(&dryRunFlag, "dry-run", "n", false, "show what would be changed without modifying machine.xml")
+	assignCmd.Flags().BoolVarP(&dryRunFlag, "dry-run", "n", false,
+		"show what would be changed without modifying machine.xml")
 }
 
 func parseFeederCSV(path string) ([]openpnp.FeederAssignment, error) {

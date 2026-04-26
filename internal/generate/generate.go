@@ -154,7 +154,8 @@ func WritePosFile(placements []Placement, path string) error {
 	w("### Footprint positions ###\n")
 	w("## Unit = mm, Angle = deg.\n")
 	w("## Side : All\n")
-	w("# Ref     Val                          Package                                    PosX       PosY       Rot  Side\n")
+	w("# Ref     Val                          Package" +
+		"                                    PosX       PosY       Rot  Side\n")
 	for _, p := range placements {
 		w("%-10s%-29s%-43s%10s%11s%10s  %s\n",
 			p.Ref, p.Val, p.Package, p.X, p.Y, p.Rot, p.Side)
