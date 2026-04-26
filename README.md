@@ -145,7 +145,7 @@ feeder-map:
 
 ## Build
 
-Requires [Go](https://go.dev/) 1.21+:
+Requires [Go](https://go.dev/) 1.26+:
 
 ```bash
 make build    # build binary
