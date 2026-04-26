@@ -1,42 +1,12 @@
 version: "2"
 
-run:
-  timeout: 3m
-
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment
-    settings:
-      shadow:
-        strict: false
-
-  funlen:
-    lines: 80
-    statements: 60
-    ignore-comments: true
-
-
-  lll:
-    line-length: 150
-
-  nakedret:
-    max-func-lines: 0
-
 linters:
-  disable-all: true
   enable:
-    # defaults
     - errcheck
     - govet
     - ineffassign
     - staticcheck
     - unused
-    # extra
     - asciicheck
     - bodyclose
     - copyloopvar
@@ -57,12 +27,23 @@ linters:
     - unconvert
     - unparam
     - whitespace
+  settings:
+    errcheck:
+      check-type-assertions: true
+    govet:
+      disable:
+        - fieldalignment
+    funlen:
+      lines: 80
+      statements: 60
+      ignore-comments: true
+    lll:
+      line-length: 140
+    nakedret:
+      max-func-lines: 0
 
 issues:
   max-same-issues: 50
   exclude-rules:
     - path: "_test\\.go"
-      linters: [funlen, dupl, gosec]
-    # cobra requires globals and init()
-    - path: "cmd/"
-      linters: [gochecknoglobals, gochecknoinits]
+      linters: [funlen, dupl]

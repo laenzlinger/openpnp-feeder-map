@@ -13,7 +13,6 @@ func testdataPath(name string) string {
 	return filepath.Join(filepath.Dir(f), "testdata", name)
 }
 
-//nolint:funlen // test function
 func TestParseMachine(t *testing.T) {
 	m, err := ParseMachine(testdataPath("machine.xml"))
 	if err != nil {
