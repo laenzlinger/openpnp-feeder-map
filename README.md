@@ -1,6 +1,6 @@
-# openpnp-feeder-map
+# openpnp-tools
 
-[![CI](https://github.com/laenzlinger/openpnp-feeder-map/actions/workflows/ci.yml/badge.svg)](https://github.com/laenzlinger/openpnp-feeder-map/actions/workflows/ci.yml)
+[![CI](https://github.com/laenzlinger/openpnp-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/laenzlinger/openpnp-tools/actions/workflows/ci.yml)
 
 Generates an interactive HTML feeder map for an [OpenPnP](https://openpnp.org/) job.
 
@@ -41,7 +41,7 @@ machine.xml ──→ feeders ────────────┤
 ## Usage
 
 ```
-openpnp-feeder-map [flags] <job.xml>
+openpnp-tools [flags] <job.xml>
 ```
 
 ### Flags
@@ -54,7 +54,7 @@ openpnp-feeder-map [flags] <job.xml>
 ### Example
 
 ```bash
-openpnp-feeder-map -output granit-feeders.html ~/projects/granit/pnp/granit.job.xml
+openpnp-tools -output granit-feeders.html ~/projects/granit/pnp/granit.job.xml
 ```
 
 Then open `granit-feeders.html` in a browser.

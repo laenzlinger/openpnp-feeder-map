@@ -5,7 +5,7 @@ package feedermap
 import (
 	"sort"
 
-	"github.com/laenzlinger/openpnp-feeder-map/internal/openpnp"
+	"github.com/laenzlinger/openpnp-tools/internal/openpnp"
 )
 
 // FeederEntry is one row in the feeder map output.

@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/laenzlinger/openpnp-feeder-map/internal/feedermap"
-	"github.com/laenzlinger/openpnp-feeder-map/internal/openpnp"
+	"github.com/laenzlinger/openpnp-tools/internal/feedermap"
+	"github.com/laenzlinger/openpnp-tools/internal/openpnp"
 	"github.com/spf13/cobra"
 )
 

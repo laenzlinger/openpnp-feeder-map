@@ -1,4 +1,4 @@
-module github.com/laenzlinger/openpnp-feeder-map
+module github.com/laenzlinger/openpnp-tools
 
 go 1.26.2
 

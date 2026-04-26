@@ -2,7 +2,7 @@
 
 package main
 
-import "github.com/laenzlinger/openpnp-feeder-map/cmd"
+import "github.com/laenzlinger/openpnp-tools/cmd"
 
 var version = "dev"
 

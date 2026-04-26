@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/laenzlinger/openpnp-feeder-map/internal/openpnp"
+	"github.com/laenzlinger/openpnp-tools/internal/openpnp"
 )
 
 func testdataPath(name string) string {

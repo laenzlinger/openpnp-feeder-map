@@ -12,7 +12,7 @@ import (
 var machineFlag string
 
 var rootCmd = &cobra.Command{
-	Use:   "openpnp-feeder-map",
+	Use:   "openpnp-tools",
 	Short: "OpenPnP feeder map and management tool",
 	Long:  `Generates interactive feeder maps and manages feeder assignments for OpenPnP jobs.`,
 	DisableAutoGenTag: true,

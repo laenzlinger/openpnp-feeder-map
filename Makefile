@@ -2,7 +2,7 @@
 .DEFAULT_GOAL := help
 
 build: ## Build the binary
-	go build -o openpnp-feeder-map .
+	go build -o openpnp-tools .
 
 run: ## Run with example job (set JOB=path/to/job.xml)
 	go run . $(JOB)
@@ -14,7 +14,7 @@ lint: ## Lint source code
 	golangci-lint run
 
 clean: ## Clean build artifacts
-	rm -f openpnp-feeder-map
+	rm -f openpnp-tools
 	go clean -testcache
 
 help:
