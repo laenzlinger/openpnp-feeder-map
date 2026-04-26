@@ -41,11 +41,16 @@ type MissingPart struct {
 
 // Build creates the feeder map data by matching job parts to machine feeders.
 // calcCapacity returns the max number of parts a strip feeder can hold.
+// Subtracts 2 for cut waste at both ends of the strip.
 func calcCapacity(stripLength float64, f *openpnp.Feeder) int {
 	if stripLength <= 0 || f.PartPitch == nil || f.PartPitch.Value <= 0 {
 		return 0
 	}
-	return int(stripLength / f.PartPitch.Value)
+	cap := int(stripLength/f.PartPitch.Value) - 2
+	if cap < 0 {
+		return 0
+	}
+	return cap
 }
 
 func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpnp.Machine, stripLength float64) *MapData {
