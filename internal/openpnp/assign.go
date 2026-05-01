@@ -67,7 +67,7 @@ func AssignFeeders(
 		changed := oldPartID != a.PartID
 		content = content[:start] + a.PartID + content[end:]
 
-		pkg := packageFromPartID(a.PartID)
+		pkg := PackageFromPartID(a.PartID, pkgMap)
 		info, ok := pkgMap.LookupByPackage(pkg)
 		if ok && info.TapeType != "" {
 			content = replaceFeederAttr(content, a.FeederName,

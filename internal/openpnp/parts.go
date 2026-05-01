@@ -26,6 +26,22 @@ func packageFromPartID(partID string) string {
 	return partID
 }
 
+// PackageFromPartID extracts the package name from a part-id using the package map.
+// Falls back to last-dash split if no match found.
+func PackageFromPartID(partID string, pkgMap *generate.PackageMap) string {
+	if pkgMap != nil {
+		for i := len(partID) - 1; i > 0; i-- {
+			if partID[i] == '-' {
+				candidate := partID[:i]
+				if _, ok := pkgMap.LookupByPackage(candidate); ok {
+					return candidate
+				}
+			}
+		}
+	}
+	return packageFromPartID(partID)
+}
+
 // EnsurePartsWithMap ensures parts exist in parts.xml, using the package map for heights.
 func EnsurePartsWithMap(
 	partsPath string,

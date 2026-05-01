@@ -55,7 +55,7 @@ exist in parts.xml and packages.xml with correct metadata from the package map.`
 				seenParts[p.PartID] = true
 				partIDs = append(partIDs, p.PartID)
 			}
-			pkg := extractPackage(p.PartID, pkgMap)
+			pkg := openpnp.PackageFromPartID(p.PartID, pkgMap)
 			if !seenPkgs[pkg] {
 				seenPkgs[pkg] = true
 				packageIDs = append(packageIDs, pkg)
@@ -97,25 +97,4 @@ func init() {
 		"path to parts.xml (default: ~/.openpnp2/parts.xml)")
 	ensurePartsCmd.Flags().StringVar(&packagesFileFlag, "packages", "",
 		"path to packages.xml (default: ~/.openpnp2/packages.xml)")
-}
-
-// extractPackage finds the package name from a part-id using the package map.
-// Falls back to last-dash split if no match found.
-func extractPackage(partID string, pkgMap *generate.PackageMap) string {
-	// Try each possible split point, check if the prefix is a known package
-	for i := len(partID) - 1; i > 0; i-- {
-		if partID[i] == '-' {
-			candidate := partID[:i]
-			if _, ok := pkgMap.LookupByPackage(candidate); ok {
-				return candidate
-			}
-		}
-	}
-	// Fallback: last dash
-	for i := len(partID) - 1; i > 0; i-- {
-		if partID[i] == '-' {
-			return partID[:i]
-		}
-	}
-	return partID
 }
