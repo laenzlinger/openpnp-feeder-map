@@ -73,7 +73,7 @@ func nozzleTipElement(pkgID string, pkgMap *generate.PackageMap) string {
 	if !ok || info.NozzleTip == "" {
 		return ""
 	}
-	return fmt.Sprintf("      <compatible-nozzle-tip-ids class=\"java.util.LinkedHashSet\">\n"+
+	return fmt.Sprintf("      <compatible-nozzle-tip-ids class=\"java.util.ArrayList\">\n"+
 		"         <string>%s</string>\n"+
 		"      </compatible-nozzle-tip-ids>\n", info.NozzleTip)
 }
@@ -173,7 +173,7 @@ func setNozzleTip(content, pkgID string, pkgMap *generate.PackageMap, result *En
 		return content
 	}
 
-	nozzleElement := fmt.Sprintf("      <compatible-nozzle-tip-ids class=\"java.util.LinkedHashSet\">\n"+
+	nozzleElement := fmt.Sprintf("      <compatible-nozzle-tip-ids class=\"java.util.ArrayList\">\n"+
 		"         <string>%s</string>\n"+
 		"      </compatible-nozzle-tip-ids>\n", info.NozzleTip)
 
