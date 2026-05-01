@@ -31,7 +31,8 @@ Outputs:
 ### `ensure-parts` — create missing parts
 
 Ensures all parts referenced by a board exist in `parts.xml` with correct
-package-id and heights from the package map.
+package-id and heights from the package map. Also sets `tape-specification`
+and `compatible-nozzle-tip-ids` on packages in `packages.xml`.
 
 ```bash
 openpnp-tools ensure-parts pnp/myboard.board.xml
@@ -64,11 +65,11 @@ openpnp-tools map -o pnp/feeder-map.html pnp/myboard.job.xml
 Single source of truth for package metadata, shared across all projects:
 
 ```csv
-kicad_footprint,openpnp_package,height,tape_type,part_pitch,tape_width
-C_0805_2012Metric,C_0805,0.9,WhitePaper,4,8
-R_0805_2012Metric,R_0805,0.5,WhitePaper,4,8
-SOT-23,SOT-23,1.1,ClearPlastic,8,8
-SOIC-8_3.9x4.9mm_P1.27mm,SOIC-8,1.75,ClearPlastic,12,12
+kicad_footprint,openpnp_package,height,tape_type,part_pitch,tape_width,nozzle_tip
+C_0805_2012Metric,C_0805,0.9,WhitePaper,4,8,NT1
+R_0805_2012Metric,R_0805,0.5,WhitePaper,4,8,NT1
+SOT-23,SOT-23,1.1,ClearPlastic,8,8,NT1
+SOIC-8_3.9x4.9mm_P1.27mm,SOIC-8,1.75,ClearPlastic,12,12,TIP16cbc9505c3e1916
 ```
 
 | Column | Description |
@@ -79,6 +80,7 @@ SOIC-8_3.9x4.9mm_P1.27mm,SOIC-8,1.75,ClearPlastic,12,12
 | `tape_type` | `WhitePaper`, `ClearPlastic`, or `BlackPlastic` (set on feeders in `machine.xml`) |
 | `part_pitch` | Distance between parts on tape in mm (set on feeders in `machine.xml`) |
 | `tape_width` | Tape width in mm: 8, 12, 16 (set as `tape-specification` on packages in `packages.xml`) |
+| `nozzle_tip` | OpenPnP nozzle tip ID (set as `compatible-nozzle-tip-ids` on packages in `packages.xml`) |
 
 Lines starting with `#` are comments. Rows with empty tape columns are hand-place
 components (connectors, switches) — they are mapped but get no feeder metadata.

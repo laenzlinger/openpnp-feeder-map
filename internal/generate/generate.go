@@ -39,6 +39,7 @@ type PackageInfo struct {
 	TapeType  string  // WhitePaper, ClearPlastic, BlackPlastic
 	PartPitch float64 // mm between parts on tape
 	TapeWidth int     // tape width in mm (8, 12, 16, ...)
+	NozzleTip string  // OpenPnP nozzle tip ID (e.g. "NT1", "TIP16cbc9505c3e1916")
 }
 
 // PackageMap maps KiCad footprints to OpenPnP package info.
@@ -105,6 +106,9 @@ func LoadPackageMap(path string) (*PackageMap, error) {
 		}
 		if len(row) > 5 && row[5] != "" {
 			info.TapeWidth, _ = strconv.Atoi(row[5])
+		}
+		if len(row) > 6 && row[6] != "" {
+			info.NozzleTip = row[6]
 		}
 		m.byFootprint[row[0]] = info
 	}
