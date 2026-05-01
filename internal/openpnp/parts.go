@@ -56,16 +56,20 @@ func EnsurePartsWithMap(
 	result := &EnsurePartsResult{}
 
 	for _, partID := range partIDs {
-		marker := fmt.Sprintf(`id="%s"`, partID)
-		if strings.Contains(content, marker) {
-			result.Existed = append(result.Existed, partID)
-			continue
-		}
-
-		pkg := packageFromPartID(partID)
+		pkg := PackageFromPartID(partID, pkgMap)
 		height := 0.0
 		if info, ok := pkgMap.LookupByPackage(pkg); ok {
 			height = info.Height
+		}
+
+		marker := fmt.Sprintf(`id="%s"`, partID)
+		if strings.Contains(content, marker) {
+			// Update height if package map has one
+			if height > 0 {
+				content = replacePartAttr(content, partID, "height", fmt.Sprintf("%.1f", height))
+			}
+			result.Existed = append(result.Existed, partID)
+			continue
 		}
 
 		entry := fmt.Sprintf(
@@ -78,10 +82,30 @@ func EnsurePartsWithMap(
 		result.Created = append(result.Created, partID)
 	}
 
-	if len(result.Created) > 0 {
-		if err := os.WriteFile(partsPath, []byte(content), 0o600); err != nil {
-			return nil, fmt.Errorf("writing parts.xml: %w", err)
-		}
+	if err := os.WriteFile(partsPath, []byte(content), 0o600); err != nil {
+		return nil, fmt.Errorf("writing parts.xml: %w", err)
 	}
 	return result, nil
+}
+
+// replacePartAttr replaces an attribute value on a part element.
+func replacePartAttr(content, partID, attr, value string) string {
+	marker := fmt.Sprintf(`id="%s"`, partID)
+	idx := strings.Index(content, marker)
+	if idx == -1 {
+		return content
+	}
+	searchEnd := idx + 500
+	if searchEnd > len(content) {
+		searchEnd = len(content)
+	}
+	region := content[idx:searchEnd]
+	attrMarker := fmt.Sprintf(`%s="`, attr)
+	attrIdx := strings.Index(region, attrMarker)
+	if attrIdx == -1 {
+		return content
+	}
+	absStart := idx + attrIdx + len(attrMarker)
+	absEnd := absStart + strings.Index(content[absStart:], `"`)
+	return content[:absStart] + value + content[absEnd:]
 }
