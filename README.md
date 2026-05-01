@@ -7,12 +7,45 @@ CLI toolkit for managing [OpenPnP](https://openpnp.org/) pick-and-place jobs.
 Bridges the gap between KiCad PCB design and OpenPnP machine operation — generating
 board files, assigning feeders, and visualizing the setup.
 
+## Data flow
+
+```
+KiCad Schematic                KiCad PCB
+      │                             │
+      ├─ sch export bom             ├─ pcb export pos
+      │  (Value,Footprint,IPN)      │  (Ref,Value,Footprint,X,Y,Rot,Side)
+      ▼                             ▼
+  pnp/bom.csv              position CSV
+      │                             │
+      │                             ▼
+      │                     ┌──────────────┐
+      │                     │   generate   │──▶ pnp/board.xml + pnp/board.pos
+      │                     └──────────────┘
+      │                             │
+      │                             ▼
+      │                     ┌──────────────┐
+      │                     │ ensure-parts │──▶ parts.xml, packages.xml
+      │                     └──────────────┘
+      │
+      │   pnp/feeders.csv ─▶┌──────────────┐
+      │                      │    assign    │──▶ machine.xml (feeder slots)
+      │                      └──────────────┘
+      │
+      │   pnp/job.xml ─────▶┌──────────────┐
+      └────────────────────▶│     map      │──▶ pnp/feeder-map.html
+                             └──────────────┘
+
+Shared config (read by generate, map, ensure-parts):
+  ~/.openpnp2/package-map.csv   Footprint → package mapping + tape metadata
+  ~/.openpnp2/machine.xml       Feeder positions, bed dimensions
+```
+
 ## Commands
 
 ### `generate` — KiCad → OpenPnP board
 
 Reads a KiCad position CSV and generates an OpenPnP board XML with remapped
-package names. Fiducials are auto-detected. Missing parts are created in `parts.xml`.
+package names. Fiducials are auto-detected.
 
 ```bash
 # KiCad 10+ (writes to file)
@@ -54,9 +87,28 @@ openpnp-tools assign --dry-run pnp/feeders.csv       # preview changes
 Generates a self-contained HTML page showing feeder positions, job parts,
 missing feeders, and board outlines.
 
+With `--bom`, adds an IPN column for cross-referencing against inventory
+management (e.g. InvenTree).
+
 ```bash
+# Basic
 openpnp-tools map -o pnp/feeder-map.html pnp/myboard.job.xml
+
+# With IPN from KiCad BOM
+kicad-cli sch export bom --fields "Value,Footprint,IPN" \
+  --labels "Value,Footprint,IPN" --group-by "Value,Footprint,IPN" \
+  --exclude-dnp -o pnp/bom.csv myboard.kicad_sch
+openpnp-tools map --bom pnp/bom.csv -o pnp/feeder-map.html pnp/myboard.job.xml
 ```
+
+## Global flags
+
+These flags are available on all commands:
+
+| Flag | Default | Description |
+| ---- | ------- | ----------- |
+| `--machine` | `~/.openpnp2/machine.xml` | Path to OpenPnP machine config |
+| `--package-map` | `~/.openpnp2/openpnp-package-map.csv` | Path to footprint → package mapping CSV |
 
 ## Configuration
 
@@ -116,7 +168,7 @@ Feeder naming convention:
 ```bash
 make pnp          # generate board.xml + ensure parts
 make feeders      # assign parts to feeder slots
-make feeder-map   # visualize the setup
+make feeder-map   # visualize the setup (with IPN cross-reference)
 ```
 
 ### After PCB revision
@@ -149,7 +201,11 @@ feeders:
 	openpnp-tools assign pnp/feeders.csv
 
 feeder-map:
-	openpnp-tools map -o pnp/feeder-map.html pnp/$(PROJECT).job.xml
+	kicad-cli sch export bom --fields "Value,Footprint,IPN" \
+		--labels "Value,Footprint,IPN" --group-by "Value,Footprint,IPN" \
+		--exclude-dnp -o pnp/bom.csv $(PROJECT).kicad_sch
+	openpnp-tools map --bom pnp/bom.csv \
+		-o pnp/feeder-map.html pnp/$(PROJECT).job.xml
 ```
 
 ## Build

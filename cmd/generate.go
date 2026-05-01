@@ -14,7 +14,6 @@ import (
 var (
 	generateOutputDir string
 	generateBoardName string
-	packageMapFlag    string
 	boardWidth        float64
 	boardHeight       float64
 )
@@ -35,11 +34,6 @@ Example (KiCad ≤9 writes to stdout):
   kicad-cli pcb export pos --format csv --side both --units mm --smd-only --exclude-dnp board.kicad_pcb \
     | openpnp-tools generate -o pnp/ -n myboard`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		home, _ := os.UserHomeDir()
-		if packageMapFlag == "" {
-			packageMapFlag = filepath.Join(home, ".openpnp2", "openpnp-package-map.csv")
-		}
-
 		pkgMap, err := generate.LoadPackageMap(packageMapFlag)
 		if err != nil {
 			return fmt.Errorf("loading package map: %w", err)
@@ -93,6 +87,4 @@ func init() {
 	generateCmd.Flags().StringVarP(&generateBoardName, "name", "n", "granit", "board name (used for filenames)")
 	generateCmd.Flags().Float64Var(&boardWidth, "board-width", 0, "board width in mm")
 	generateCmd.Flags().Float64Var(&boardHeight, "board-height", 0, "board height in mm")
-	generateCmd.Flags().StringVar(&packageMapFlag, "package-map", "",
-		"path to package map CSV (default: ~/.openpnp2/openpnp-package-map.csv)")
 }

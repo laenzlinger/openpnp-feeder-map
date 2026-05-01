@@ -31,9 +31,6 @@ exist in parts.xml and packages.xml with correct metadata from the package map.`
 		if packagesFileFlag == "" {
 			packagesFileFlag = filepath.Join(home, ".openpnp2", "packages.xml")
 		}
-		if packageMapFlag == "" {
-			packageMapFlag = filepath.Join(home, ".openpnp2", "openpnp-package-map.csv")
-		}
 
 		pkgMap, err := generate.LoadPackageMap(packageMapFlag)
 		if err != nil {

@@ -3,15 +3,71 @@
 package feedermap
 
 import (
+	"encoding/csv"
+	"fmt"
+	"io"
 	"math"
 	"sort"
+	"strings"
 
+	"github.com/laenzlinger/openpnp-tools/internal/generate"
 	"github.com/laenzlinger/openpnp-tools/internal/openpnp"
 )
+
+// LoadIPNMapFromBOM reads a KiCad BOM CSV (with Value, Footprint, IPN columns)
+// and a package map to build a mapping from OpenPnP PartID to IPN.
+// The BOM is exported with: kicad-cli sch export bom --fields "Value,Footprint,IPN" --group-by "Value,Footprint,IPN"
+func LoadIPNMapFromBOM(r io.Reader, pkgMap *generate.PackageMap) (map[string]string, error) {
+	reader := csv.NewReader(r)
+	reader.FieldsPerRecord = -1
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("reading BOM: %w", err)
+	}
+	if len(records) == 0 {
+		return nil, nil
+	}
+
+	// Find column indices from header
+	header := records[0]
+	col := make(map[string]int)
+	for i, h := range header {
+		col[strings.TrimSpace(h)] = i
+	}
+	valIdx, valOK := col["Value"]
+	fpIdx, fpOK := col["Footprint"]
+	ipnIdx, ipnOK := col["IPN"]
+	if !valOK || !fpOK || !ipnOK {
+		return nil, fmt.Errorf("BOM CSV must have Value, Footprint, and IPN columns")
+	}
+
+	m := make(map[string]string)
+	for _, row := range records[1:] {
+		if len(row) <= ipnIdx {
+			continue
+		}
+		value := strings.TrimSpace(row[valIdx])
+		fpFull := strings.TrimSpace(row[fpIdx])
+		ipn := strings.TrimSpace(row[ipnIdx])
+		if ipn == "" || value == "" {
+			continue
+		}
+		// Strip library prefix (e.g. "Capacitor_SMD:C_0805_2012Metric" → "C_0805_2012Metric")
+		fp := fpFull
+		if i := strings.LastIndex(fp, ":"); i >= 0 {
+			fp = fp[i+1:]
+		}
+		pkg := pkgMap.PackageName(fp)
+		partID := fmt.Sprintf("%s-%s", pkg, value)
+		m[partID] = ipn
+	}
+	return m, nil
+}
 
 // FeederEntry is one row in the feeder map output.
 type FeederEntry struct {
 	Feeder   openpnp.Feeder
+	IPN      string  // InvenTree IPN (empty if not mapped)
 	Count    int     // placements in this job
 	Capacity int     // max parts on strip (strip_length / part_pitch)
 	StartX   float64 // reference hole / pick location X
@@ -31,12 +87,14 @@ type MapData struct {
 	BedXMin, BedXMax float64
 	BedYMin, BedYMax float64
 	HasBed           bool
+	HasIPN           bool    // true if any feeder has an IPN
 	StripLength      float64 // default strip feeder slot length in mm
 }
 
 // MissingPart is a job part that has no matching feeder.
 type MissingPart struct {
 	PartID string
+	IPN    string
 	Count  int
 }
 
@@ -92,7 +150,9 @@ func collectUnused(machine *openpnp.Machine, usedParts map[string]bool, stripLen
 	return unused
 }
 
-func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpnp.Machine, stripLength float64) *MapData {
+func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpnp.Machine,
+	stripLength float64, ipnMap map[string]string,
+) *MapData {
 	// Index feeders by part-id (only enabled feeders with a position).
 	feederByPart := make(map[string]*openpnp.Feeder)
 	for i := range machine.Feeders {
@@ -106,6 +166,10 @@ func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpn
 		feederByPart[f.PartID] = f
 	}
 
+	if ipnMap == nil {
+		ipnMap = make(map[string]string)
+	}
+
 	usedParts := make(map[string]bool)
 	var feeders []FeederEntry
 	var missing []MissingPart
@@ -113,12 +177,13 @@ func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpn
 	for partID, count := range jobParts {
 		f, ok := feederByPart[partID]
 		if !ok {
-			missing = append(missing, MissingPart{PartID: partID, Count: count})
+			missing = append(missing, MissingPart{PartID: partID, IPN: ipnMap[partID], Count: count})
 			continue
 		}
 		usedParts[partID] = true
 		entry := FeederEntry{
 			Feeder: *f,
+			IPN:    ipnMap[partID],
 			Count:  count,
 			StartX: f.PickX(),
 			StartY: f.PickY(),
@@ -153,5 +218,6 @@ func Build(jobParts map[string]int, boards []openpnp.BoardEntry, machine *openpn
 		BedYMin:       machine.BedYMin,
 		BedYMax:       machine.BedYMax,
 		HasBed:        machine.HasBed,
+		HasIPN:        len(ipnMap) > 0,
 	}
 }

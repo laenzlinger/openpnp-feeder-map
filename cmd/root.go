@@ -10,6 +10,7 @@ import (
 )
 
 var machineFlag string
+var packageMapFlag string
 
 var rootCmd = &cobra.Command{
 	Use:               "openpnp-tools",
@@ -29,4 +30,6 @@ func init() {
 	home, _ := os.UserHomeDir()
 	defaultMachine := filepath.Join(home, ".openpnp2", "machine.xml")
 	rootCmd.PersistentFlags().StringVar(&machineFlag, "machine", defaultMachine, "path to machine.xml")
+	defaultPkgMap := filepath.Join(home, ".openpnp2", "openpnp-package-map.csv")
+	rootCmd.PersistentFlags().StringVar(&packageMapFlag, "package-map", defaultPkgMap, "path to package map CSV")
 }

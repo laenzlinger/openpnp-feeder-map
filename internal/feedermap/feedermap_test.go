@@ -25,7 +25,7 @@ func TestBuild(t *testing.T) {
 		t.Fatalf("LoadJobParts: %v", err)
 	}
 
-	data := Build(parts, boards, machine, 120)
+	data := Build(parts, boards, machine, 120, nil)
 
 	// Job feeders: R_0805-10K (LV8-01), C_0805-100n (LV8-02), QFN-48 (TRAY-01) = 3
 	if got := len(data.Feeders); got != 3 {

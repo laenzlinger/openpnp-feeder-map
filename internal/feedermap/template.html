@@ -64,11 +64,12 @@ tr:hover td { background: var(--code-bg); cursor: pointer; }
 <div class="sidebar" id="sidebar">
   <h2>Job Feeders ({{len .Feeders}})</h2>
   <table>
-    <tr><th>Feeder</th><th>Part</th><th>Qty</th><th>Type</th></tr>
+    <tr><th>Feeder</th><th>Part</th>{{if .HasIPN}}<th>IPN</th>{{end}}<th>Qty</th><th>Type</th></tr>
     {{range .Feeders}}
     <tr data-feeder="{{.Feeder.ID}}" onclick="highlight('{{.Feeder.ID}}')">
       <td style="white-space:nowrap">{{.Feeder.Name}}</td>
       <td>{{.Feeder.PartID}}</td>
+      {{if $.HasIPN}}<td>{{.IPN}}</td>{{end}}
       <td><span class="badge badge-count">{{.Count}}{{if .Capacity}}/{{.Capacity}}{{end}}</span></td>
       <td><span class="badge badge-{{.Feeder.FeederType | lower}}">{{.Feeder.FeederType}}</span>{{if .Feeder.TapeType}} <span class="tape-hint">{{.Feeder.TapeType}}{{if .Feeder.TapeWidth}} {{printf "%.0f" .Feeder.TapeWidth.Value}}mm{{end}}</span>{{end}}</td>
     </tr>
@@ -78,9 +79,9 @@ tr:hover td { background: var(--code-bg); cursor: pointer; }
   {{if .MissingParts}}
   <h2 class="missing">⚠ Missing Feeders ({{len .MissingParts}})</h2>
   <table>
-    <tr><th>Part</th><th>Qty</th></tr>
+    <tr><th>Part</th>{{if .HasIPN}}<th>IPN</th>{{end}}<th>Qty</th></tr>
     {{range .MissingParts}}
-    <tr><td class="missing">{{.PartID}}</td><td><span class="badge badge-count">{{.Count}}</span></td></tr>
+    <tr><td class="missing">{{.PartID}}</td>{{if $.HasIPN}}<td>{{.IPN}}</td>{{end}}<td><span class="badge badge-count">{{.Count}}</span></td></tr>
     {{end}}
   </table>
   {{end}}
