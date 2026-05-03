@@ -64,13 +64,14 @@ tr:hover td { background: var(--code-bg); cursor: pointer; }
 <div class="sidebar" id="sidebar">
   <h2>Job Feeders ({{len .Feeders}})</h2>
   <table>
-    <tr><th>Feeder</th><th>Part</th>{{if .HasIPN}}<th>IPN</th>{{end}}<th>Qty</th><th>Type</th></tr>
+    <tr><th>Feeder</th><th>Part</th>{{if .HasIPN}}<th>IPN</th>{{end}}<th>Qty</th><th>Rot</th><th>Type</th></tr>
     {{range .Feeders}}
     <tr data-feeder="{{.Feeder.ID}}" onclick="highlight('{{.Feeder.ID}}')">
       <td style="white-space:nowrap">{{.Feeder.Name}}</td>
       <td>{{.Feeder.PartID}}</td>
       {{if $.HasIPN}}<td style="white-space:nowrap">{{.IPN}}</td>{{end}}
       <td><span class="badge badge-count">{{.Count}}{{if .Capacity}}/{{.Capacity}}{{end}}</span></td>
+      <td>{{printf "%.0f" .Feeder.Location.Rotation}}°</td>
       <td><span class="badge badge-{{.Feeder.FeederType | lower}}">{{.Feeder.FeederType}}</span>{{if .Feeder.TapeType}} <span class="tape-hint">{{.Feeder.TapeType}}{{if .Feeder.TapeWidth}} {{printf "%.0f" .Feeder.TapeWidth.Value}}mm{{end}}</span>{{end}}</td>
     </tr>
     {{end}}
