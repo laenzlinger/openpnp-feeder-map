@@ -143,8 +143,16 @@ func ParseKiCadCSV(r io.Reader, pkgMap *PackageMap) ([]Placement, error) {
 		pkg := pkgMap.PackageName(kicadFP)
 
 		ptype := "Placement"
+		enabled := true
 		if strings.Contains(strings.ToLower(kicadFP), "fiducial") {
 			ptype = placementTypeFiducial
+		}
+
+		// Disable placements for hand-place packages (no tape info in package map)
+		if ptype != placementTypeFiducial {
+			if info, ok := pkgMap.Lookup(kicadFP); ok && info.TapeType == "" && info.TapeWidth == 0 {
+				enabled = false
+			}
 		}
 
 		rot := strings.TrimSpace(row[5])
@@ -160,7 +168,7 @@ func ParseKiCadCSV(r io.Reader, pkgMap *PackageMap) ([]Placement, error) {
 			Rot:     rot,
 			Side:    strings.TrimSpace(row[6]),
 			Type:    ptype,
-			Enabled: true,
+			Enabled: enabled,
 		})
 	}
 	return placements, nil
