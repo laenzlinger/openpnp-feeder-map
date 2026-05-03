@@ -82,6 +82,19 @@ openpnp-tools assign --reset-unused pnp/feeders.csv  # reset unassigned feeders
 openpnp-tools assign --dry-run pnp/feeders.csv       # preview changes
 ```
 
+### `reset-feeders` — prepare for version control
+
+Resets all strip feeder `part-id` to `CALIBRATION-DUMMY` and zeroes `feed-count`.
+Leaves positions, calibration, tape-type, rotation, and pitch untouched.
+
+```bash
+openpnp-tools reset-feeders                              # reset ~/.openpnp2/machine.xml
+openpnp-tools reset-feeders --machine path/to/machine.xml  # reset a copy
+```
+
+Used by [openpnp-config](https://github.com/laenzlinger/openpnp-config) to strip
+project-specific state before committing the base machine config.
+
 ### `map` — interactive feeder visualization
 
 Generates a self-contained HTML page showing feeder positions, job parts,
@@ -120,8 +133,8 @@ Single source of truth for package metadata, shared across all projects:
 kicad_footprint,openpnp_package,height,tape_type,part_pitch,tape_width,nozzle_tip
 C_0805_2012Metric,C_0805,0.9,WhitePaper,4,8,NT1
 R_0805_2012Metric,R_0805,0.5,WhitePaper,4,8,NT1
-SOT-23,SOT-23,1.1,ClearPlastic,8,8,NT1
-SOIC-8_3.9x4.9mm_P1.27mm,SOIC-8,1.75,ClearPlastic,12,12,TIP16cbc9505c3e1916
+SOT-23,SOT-23,1.1,BlackPlastic,8,8,NT1
+SOIC-8_3.9x4.9mm_P1.27mm,SOIC-8,1.75,BlackPlastic,8,12,TIP16cbc9505c3e1916
 ```
 
 | Column | Description |
