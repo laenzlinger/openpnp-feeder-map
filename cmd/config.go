@@ -14,6 +14,12 @@ var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Manage OpenPnP configuration (backup, apply, pull, status)",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// Chain parent's PersistentPreRunE
+		if rootCmd.PersistentPreRunE != nil {
+			if err := rootCmd.PersistentPreRunE(cmd, args); err != nil {
+				return err
+			}
+		}
 		s, err := config.LoadSettings(configDirFlag)
 		if err != nil {
 			return err

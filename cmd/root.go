@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/laenzlinger/openpnp-tools/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -17,6 +18,19 @@ var rootCmd = &cobra.Command{
 	Short:             "OpenPnP feeder map and management tool",
 	Long:              `Generates interactive feeder maps and manages feeder assignments for OpenPnP jobs.`,
 	DisableAutoGenTag: true,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// If --package-map wasn't explicitly set, try repo-dir from settings
+		if !cmd.Flags().Changed("package-map") {
+			s, _ := config.LoadSettings(config.DefaultConfigDir())
+			if s.RepoDir != "" {
+				candidate := filepath.Join(s.RepoDir, "openpnp-package-map.csv")
+				if _, err := os.Stat(candidate); err == nil {
+					packageMapFlag = candidate
+				}
+			}
+		}
+		return nil
+	},
 }
 
 func Execute(version string) {
