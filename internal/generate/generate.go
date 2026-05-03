@@ -6,6 +6,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -34,12 +35,13 @@ type PlacementStats struct {
 
 // PackageInfo holds metadata for an OpenPnP package.
 type PackageInfo struct {
-	Package   string
-	Height    float64
-	TapeType  string  // WhitePaper, ClearPlastic, BlackPlastic
-	PartPitch float64 // mm between parts on tape
-	TapeWidth int     // tape width in mm (8, 12, 16, ...)
-	NozzleTip string  // OpenPnP nozzle tip ID (e.g. "NT1", "TIP16cbc9505c3e1916")
+	Package        string
+	Height         float64
+	TapeType       string  // WhitePaper, ClearPlastic, BlackPlastic
+	PartPitch      float64 // mm between parts on tape
+	TapeWidth      int     // tape width in mm (8, 12, 16, ...)
+	NozzleTip      string  // OpenPnP nozzle tip ID (e.g. "NT1", "TIP16cbc9505c3e1916")
+	RotationOffset float64 // degrees to add to KiCad rotation for OpenPnP
 }
 
 // PackageMap maps KiCad footprints to OpenPnP package info.
@@ -110,6 +112,9 @@ func LoadPackageMap(path string) (*PackageMap, error) {
 		if len(row) > 6 && row[6] != "" {
 			info.NozzleTip = row[6]
 		}
+		if len(row) > 7 && row[7] != "" {
+			info.RotationOffset, _ = strconv.ParseFloat(row[7], 64)
+		}
 		m.byFootprint[row[0]] = info
 	}
 	return m, nil
@@ -143,6 +148,18 @@ func ParseKiCadCSV(r io.Reader, pkgMap *PackageMap) ([]Placement, error) {
 			ptype = placementTypeFiducial
 		}
 
+		rot := strings.TrimSpace(row[5])
+		if info, ok := pkgMap.Lookup(kicadFP); ok && info.RotationOffset != 0 {
+			r, err := strconv.ParseFloat(rot, 64)
+			if err == nil {
+				r = math.Mod(r+info.RotationOffset, 360)
+				if r < 0 {
+					r += 360
+				}
+				rot = strconv.FormatFloat(r, 'f', -1, 64)
+			}
+		}
+
 		placements = append(placements, Placement{
 			Ref:     ref,
 			Val:     val,
@@ -151,7 +168,7 @@ func ParseKiCadCSV(r io.Reader, pkgMap *PackageMap) ([]Placement, error) {
 			PartID:  fmt.Sprintf("%s-%s", pkg, val),
 			X:       strings.TrimSpace(row[3]),
 			Y:       strings.TrimSpace(row[4]),
-			Rot:     strings.TrimSpace(row[5]),
+			Rot:     rot,
 			Side:    strings.TrimSpace(row[6]),
 			Type:    ptype,
 			Enabled: true,
