@@ -8,11 +8,19 @@ import (
 	"strings"
 )
 
+// Status constants for feeder operations.
+const (
+	StatusReset     = "reset"
+	StatusUnchanged = "unchanged"
+	StatusAssigned  = "assigned"
+	StatusNotFound  = "not_found"
+)
+
 // ResetResult reports what happened for each feeder.
 type ResetResult struct {
 	FeederName string
 	OldPartID  string
-	Status     string // "reset", "unchanged"
+	Status     string // StatusReset, StatusUnchanged
 }
 
 // ResetFeeders sets all feeder part-ids to dummyPartID and resets feed-count to 0.
@@ -81,10 +89,10 @@ func ResetFeeders(machinePath string, dummyPartID string) ([]ResetResult, error)
 		oldPartID2 := content[partStart : partStart+partEnd]
 		_ = oldPartID2
 
-		status := "unchanged"
+		status := StatusUnchanged
 		if oldPartID != dummyPartID {
 			content = content[:partStart] + dummyPartID + content[partStart+partEnd:]
-			status = "reset"
+			status = StatusReset
 		}
 
 		results = append(results, ResetResult{

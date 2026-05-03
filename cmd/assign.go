@@ -65,16 +65,16 @@ Feeders not listed in the CSV are left unchanged.`,
 		assigned, unchanged, notFound, reset := 0, 0, 0, 0
 		for _, r := range results {
 			switch r.Status {
-			case "assigned":
+			case openpnp.StatusAssigned:
 				fmt.Printf("  ✓ %s: %s → %s\n", r.FeederName, r.OldPartID, r.PartID)
 				assigned++
-			case "unchanged":
+			case openpnp.StatusUnchanged:
 				fmt.Printf("  = %s: %s\n", r.FeederName, r.PartID)
 				unchanged++
-			case "not_found":
+			case openpnp.StatusNotFound:
 				fmt.Printf("  ? %s: not found in machine.xml\n", r.FeederName)
 				notFound++
-			case "reset":
+			case openpnp.StatusReset:
 				fmt.Printf("  ✗ %s: %s → %s\n", r.FeederName, r.OldPartID, r.PartID)
 				reset++
 			}

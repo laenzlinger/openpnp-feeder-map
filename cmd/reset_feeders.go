@@ -35,10 +35,10 @@ Workflow:
 		resetCount, unchanged := 0, 0
 		for _, r := range results {
 			switch r.Status {
-			case "reset":
+			case openpnp.StatusReset:
 				fmt.Printf("  ✗ %s: %s → %s\n", r.FeederName, r.OldPartID, resetDummyPartFlag)
 				resetCount++
-			case "unchanged":
+			case openpnp.StatusUnchanged:
 				fmt.Printf("  = %s\n", r.FeederName)
 				unchanged++
 			}

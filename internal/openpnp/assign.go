@@ -21,7 +21,7 @@ type AssignResult struct {
 	FeederName string
 	PartID     string
 	OldPartID  string
-	Status     string // "assigned", "unchanged", "not_found"
+	Status     string // StatusAssigned, StatusUnchanged, StatusNotFound
 }
 
 // AssignFeeders updates feeder attributes in machine.xml.
@@ -51,7 +51,7 @@ func AssignFeeders(
 			results = append(results, AssignResult{
 				FeederName: a.FeederName,
 				PartID:     a.PartID,
-				Status:     "not_found",
+				Status:     StatusNotFound,
 			})
 			continue
 		}
@@ -70,9 +70,9 @@ func AssignFeeders(
 		pkg := PackageFromPartID(a.PartID, pkgMap)
 		applyPackageMetadata(&content, a.FeederName, pkg, pkgMap, stripLength)
 
-		status := "unchanged"
+		status := StatusUnchanged
 		if changed {
-			status = "assigned"
+			status = StatusAssigned
 		}
 		results = append(results, AssignResult{
 			FeederName: a.FeederName,
@@ -141,7 +141,7 @@ func resetUnassignedFeeders(
 				FeederName: feederName,
 				PartID:     dummyPartID,
 				OldPartID:  oldPartID,
-				Status:     "reset",
+				Status:     StatusReset,
 			})
 		}
 
