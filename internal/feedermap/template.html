@@ -297,11 +297,12 @@ feeders.forEach(f => {
     line.setAttribute('stroke', color); line.setAttribute('stroke-width', '2');
     line.setAttribute('opacity', opacity);
     arrow.appendChild(line);
-    // Arrowhead
+    // Arrowhead at the tip
     let head = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
     let tx = ax, ty = -ay; // tip in SVG coords
+    let bx = ax * 0.5, by = -ay * 0.5; // base of arrowhead (midway back)
     let px = -Math.sin(rad) * s * 0.5, py = -Math.cos(rad) * s * 0.5;
-    head.setAttribute('points', `${tx},${ty} ${tx*0.4+px},${ty*0.4+py} ${tx*0.4-px},${ty*0.4-py}`);
+    head.setAttribute('points', `${tx},${ty} ${bx+px},${by+py} ${bx-px},${by-py}`);
     head.setAttribute('fill', color); head.setAttribute('opacity', opacity);
     arrow.appendChild(head);
     arrow.classList.add('feeder-dot');
