@@ -114,6 +114,30 @@ kicad-cli sch export bom --fields "Value,Footprint,IPN" \
 openpnp-tools map --bom pnp/bom.csv -o pnp/feeder-map.html pnp/myboard.job.xml
 ```
 
+### `config` — manage base machine configuration
+
+Subcommands for syncing the base config between a git repo
+([openpnp-config](https://github.com/laenzlinger/openpnp-config)) and the
+live `~/.openpnp2` directory. All subcommands share a `--config-dir` flag
+(default: `~/.openpnp2`).
+
+```bash
+openpnp-tools config backup                          # snapshot ~/.openpnp2
+openpnp-tools config apply --from /path/to/repo      # backup + copy repo → ~/.openpnp2
+openpnp-tools config pull --to /path/to/repo         # copy ~/.openpnp2 → repo + reset feeders
+openpnp-tools config status --repo /path/to/repo     # process check + per-file drift
+```
+
+- **backup** — copies all config XMLs to `~/.openpnp2/backups/<timestamp>/`,
+  using the same directory and timestamp format as OpenPnP itself.
+- **apply** — backs up first, then copies managed files from the repo into
+  `~/.openpnp2`. Use `--no-backup` to skip. OpenPnP must be closed.
+- **pull** — copies managed files from `~/.openpnp2` into the repo, then
+  runs `reset-feeders` on the repo copy. Use `--no-reset` to skip.
+  OpenPnP must be closed.
+- **status** — reports whether OpenPnP is running and shows per-file drift
+  between live config and the repo. Exits non-zero if OpenPnP is running.
+
 ## Global flags
 
 These flags are available on all commands:
