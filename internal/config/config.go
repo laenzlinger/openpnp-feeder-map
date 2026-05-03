@@ -93,10 +93,11 @@ func IsOpenPnPRunning() bool {
 	}
 	// Match the launcher process name or the Java jar, but not unrelated
 	// tools that happen to have "openpnp" in their arguments (e.g. kiro-cli --agent openpnp).
-	if exec.Command("pgrep", "-x", "OpenPnP").Run() == nil {
+	// Bracket trick ([O]penPnP) prevents pgrep from matching itself.
+	if exec.Command("pgrep", "-x", "[O]penPnP").Run() == nil {
 		return true
 	}
-	return exec.Command("pgrep", "-f", "openpnp-gui").Run() == nil
+	return exec.Command("pgrep", "-f", "[o]penpnp-gui").Run() == nil
 }
 
 // CheckNotRunning returns an error if OpenPnP is running.
