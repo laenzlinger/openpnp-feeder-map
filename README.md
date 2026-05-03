@@ -10,34 +10,34 @@ board files, assigning feeders, and visualizing the setup.
 ## Data flow
 
 ```
-KiCad Schematic                KiCad PCB
-      │                             │
-      ├─ sch export bom             ├─ pcb export pos
-      │  (Value,Footprint,IPN)      │  (Ref,Value,Footprint,X,Y,Rot,Side)
-      ▼                             ▼
-  pnp/bom.csv              position CSV
-      │                             │
-      │                             ▼
-      │                     ┌──────────────┐
-      │                     │   generate   │──▶ pnp/board.xml + pnp/board.pos
-      │                     └──────────────┘
-      │                             │
-      │                             ▼
-      │                     ┌──────────────┐
-      │                     │ ensure-parts │──▶ parts.xml, packages.xml
-      │                     └──────────────┘
+KiCad Schematic                 KiCad PCB
+      │                              │
+      ├─ sch export bom              ├─ pcb export pos
+      │  (Value,Footprint,IPN)       │  (Ref,Value,Footprint,X,Y,Rot,Side)
+      ▼                              ▼
+  pnp/bom.csv               position CSV
+      │                              │
+      │                              ▼
+      │                      ┌──────────────┐
+      │                      │   generate   │──▶ pnp/board.xml + pnp/board.pos
+      │                      └──────────────┘
+      │                              │
+      │                              ▼
+      │                      ┌──────────────┐
+      │                      │ ensure-parts │──▶ parts.xml, packages.xml
+      │                      └──────────────┘
       │
-      │   pnp/feeders.csv ─▶┌──────────────┐
+      │    pnp/feeders.csv ─▶┌──────────────┐
       │                      │    assign    │──▶ machine.xml (feeder slots)
       │                      └──────────────┘
       │
-      │   pnp/job.xml ─────▶┌──────────────┐
-      └────────────────────▶│     map      │──▶ pnp/feeder-map.html
-                             └──────────────┘
+      │    pnp/job.xml ─────▶┌──────────────┐
+      └────────────────────▶ │     map      │──▶ pnp/feeder-map.html
+                              └──────────────┘
 
-Shared config (read by generate, map, ensure-parts):
-  ~/.openpnp2/package-map.csv   Footprint → package mapping + tape metadata
-  ~/.openpnp2/machine.xml       Feeder positions, bed dimensions
+Shared config:
+  openpnp-package-map.csv    Footprint → package mapping + tape metadata
+  ~/.openpnp2/machine.xml    Feeder positions, bed dimensions
 ```
 
 ## Commands
@@ -45,7 +45,8 @@ Shared config (read by generate, map, ensure-parts):
 ### `generate` — KiCad → OpenPnP board
 
 Reads a KiCad position CSV and generates an OpenPnP board XML with remapped
-package names. Fiducials are auto-detected.
+package names. Fiducials are auto-detected. Hand-place parts (packages with
+no tape info in the package map) are automatically disabled.
 
 ```bash
 # KiCad 10+ (writes to file)
@@ -74,7 +75,7 @@ openpnp-tools ensure-parts pnp/myboard.board.xml
 ### `assign` — load feeder configuration
 
 Assigns parts to feeder slots in `machine.xml` based on a project's `feeders.csv`.
-Also sets tape-type and part-pitch from the package map.
+Also sets tape-type, part-pitch, and rotation from the package map.
 
 ```bash
 openpnp-tools assign pnp/feeders.csv
@@ -88,12 +89,9 @@ Resets all strip feeder `part-id` to `CALIBRATION-DUMMY` and zeroes `feed-count`
 Leaves positions, calibration, tape-type, rotation, and pitch untouched.
 
 ```bash
-openpnp-tools reset-feeders                              # reset ~/.openpnp2/machine.xml
+openpnp-tools reset-feeders                                # reset ~/.openpnp2/machine.xml
 openpnp-tools reset-feeders --machine path/to/machine.xml  # reset a copy
 ```
-
-Used by [openpnp-config](https://github.com/laenzlinger/openpnp-config) to strip
-project-specific state before committing the base machine config.
 
 ### `map` — interactive feeder visualization
 
@@ -104,7 +102,6 @@ With `--bom`, adds an IPN column for cross-referencing against inventory
 management (e.g. InvenTree).
 
 ```bash
-# Basic
 openpnp-tools map -o pnp/feeder-map.html pnp/myboard.job.xml
 
 # With IPN from KiCad BOM
@@ -116,36 +113,34 @@ openpnp-tools map --bom pnp/bom.csv -o pnp/feeder-map.html pnp/myboard.job.xml
 
 ### `config` — manage base machine configuration
 
-Subcommands for syncing the base config between a git repo
-([openpnp-config](https://github.com/laenzlinger/openpnp-config)) and the
-live `~/.openpnp2` directory. All subcommands share a `--config-dir` flag
-(default: `~/.openpnp2`).
+Syncs the base config between a git repo and the live `~/.openpnp2` directory.
+With `repo-dir` set in the settings file, all commands work from any directory.
 
 ```bash
-openpnp-tools config backup                          # snapshot ~/.openpnp2
-openpnp-tools config apply --from /path/to/repo      # backup + copy repo → ~/.openpnp2
-openpnp-tools config pull --to /path/to/repo         # copy ~/.openpnp2 → repo + reset feeders
-openpnp-tools config status --repo /path/to/repo     # process check + per-file drift
+openpnp-tools config backup       # snapshot ~/.openpnp2
+openpnp-tools config apply        # backup + copy repo → ~/.openpnp2
+openpnp-tools config pull         # copy ~/.openpnp2 → repo + reset feeders
+openpnp-tools config save         # pull + commit + push in one step
+openpnp-tools config status       # process check + per-file drift
+openpnp-tools config status -d    # include unified diff for modified files
 ```
 
 - **backup** — copies all config XMLs to `~/.openpnp2/backups/<timestamp>/`,
-  using the same directory and timestamp format as OpenPnP itself.
+  using the same format as OpenPnP itself.
 - **apply** — backs up first, then copies managed files from the repo into
-  `~/.openpnp2`. Use `--no-backup` to skip. OpenPnP must be closed.
+  `~/.openpnp2`. OpenPnP must be closed.
 - **pull** — copies managed files from `~/.openpnp2` into the repo, then
-  runs `reset-feeders` on the repo copy. Use `--no-reset` to skip.
-  OpenPnP must be closed.
-- **status** — reports whether OpenPnP is running and shows per-file drift
-  between live config and the repo. Exits non-zero if OpenPnP is running.
+  runs `reset-feeders` on the repo copy. OpenPnP must be closed.
+- **save** — pull + reset + git commit + push. Use `-m` for a custom message.
+- **status** — reports whether OpenPnP is running and shows per-file drift.
+  Use `-d` to show the actual diff.
 
 ## Global flags
-
-These flags are available on all commands:
 
 | Flag | Default | Description |
 | ---- | ------- | ----------- |
 | `--machine` | `~/.openpnp2/machine.xml` | Path to OpenPnP machine config |
-| `--package-map` | `~/.openpnp2/openpnp-package-map.csv` | Path to footprint → package mapping CSV |
+| `--package-map` | `<repo-dir>/openpnp-package-map.csv` | Path to package map CSV (falls back to `~/.openpnp2/`) |
 
 ## Configuration
 
@@ -155,48 +150,43 @@ Optional config file to avoid repeating flags. Looked up in the `--config-dir`
 directory (default: `~/.openpnp2`).
 
 ```yaml
-# Path to the openpnp-config git repo
 repo-dir: /home/user/dev/openpnp-config
 ```
 
 | Key | Used by | Description |
 | --- | ------- | ----------- |
-| `repo-dir` | `config apply`, `config pull`, `config status` | Default `--from`/`--to`/`--repo` directory |
+| `repo-dir` | `config apply/pull/save/status`, `--package-map` | Path to the config git repo |
 
-With `repo-dir` set, you can run all config commands from any directory:
+With `repo-dir` set, the package map is read directly from the repo and all
+config commands work from any directory. CLI flags always override.
 
-```bash
-openpnp-tools config pull       # pulls to repo-dir
-openpnp-tools config apply      # applies from repo-dir
-openpnp-tools config status     # compares live vs repo-dir
-```
+### Package map (`openpnp-package-map.csv`)
 
-CLI flags always override the config file.
-
-### Package map (`~/.openpnp2/openpnp-package-map.csv`)
-
-Single source of truth for package metadata, shared across all projects:
+Single source of truth for package metadata, shared across all projects.
+Lives in the config repo (resolved via `repo-dir`).
 
 ```csv
-kicad_footprint,openpnp_package,height,tape_type,part_pitch,tape_width,nozzle_tip
-C_0805_2012Metric,C_0805,0.9,WhitePaper,4,8,NT1
-R_0805_2012Metric,R_0805,0.5,WhitePaper,4,8,NT1
-SOT-23,SOT-23,1.1,BlackPlastic,8,8,NT1
-SOIC-8_3.9x4.9mm_P1.27mm,SOIC-8,1.75,BlackPlastic,8,12,TIP16cbc9505c3e1916
+kicad_footprint,openpnp_package,height,tape_type,part_pitch,tape_width,nozzle_tip,rotation_offset
+C_0805_2012Metric,C_0805,0.9,WhitePaper,4,8,NT1,90
+R_0805_2012Metric,R_0805,0.5,WhitePaper,4,8,NT1,90
+SOT-23,SOT-23,1.1,BlackPlastic,4,8,NT1,0
+SOIC-8_3.9x4.9mm_P1.27mm,SOIC-8,1.75,BlackPlastic,8,12,TIP16cbc9505c3e1916,0
 ```
 
 | Column | Description |
 | ------ | ----------- |
 | `kicad_footprint` | KiCad footprint library name (exact match) |
 | `openpnp_package` | Short OpenPnP package name |
-| `height` | Component height in mm (set on parts in `parts.xml`) |
-| `tape_type` | `WhitePaper`, `ClearPlastic`, or `BlackPlastic` (set on feeders in `machine.xml`) |
-| `part_pitch` | Distance between parts on tape in mm (set on feeders in `machine.xml`) |
-| `tape_width` | Tape width in mm: 8, 12, 16 (set as `tape-specification` on packages in `packages.xml`) |
-| `nozzle_tip` | OpenPnP nozzle tip ID (set as `compatible-nozzle-tip-ids` on packages in `packages.xml`) |
+| `height` | Component height in mm |
+| `tape_type` | `WhitePaper`, `ClearPlastic`, or `BlackPlastic` |
+| `part_pitch` | Distance between parts on tape in mm |
+| `tape_width` | Tape width in mm (8, 12, 16) |
+| `nozzle_tip` | OpenPnP nozzle tip ID |
+| `rotation_offset` | Degrees for "Rotation in Tape" in OpenPnP |
 
 Lines starting with `#` are comments. Rows with empty tape columns are hand-place
-components (connectors, switches) — they are mapped but get no feeder metadata.
+components — they are mapped but get no feeder metadata, and `generate` marks
+their placements as disabled.
 
 ### Feeder allocation (`pnp/feeders.csv`)
 
@@ -211,55 +201,49 @@ RH12-01,SOT-223-NCP1117-3.3_SOT223
 
 | Column | Description |
 | ------ | ----------- |
-| `feeder` | Feeder slot name: `{L/R}{V/H}{width}-{slot}` zero-padded (e.g. `LV08-01`, `RH12-03`) |
-| `part` | Part ID: `{Package}-{Value}` matching the board XML (e.g. `C_0805-100n`) |
-
-Lines starting with `#` are comments.
-
-Feeder naming convention:
-- `L`/`R` = left/right side of machine bed
-- `V`/`H` = vorne (front) / hinten (back)
-- Width = tape width in mm (08, 12, 16)
-- Slot = position number, zero-padded
+| `feeder` | Feeder slot name (e.g. `LV08-01`, `RH12-03`) |
+| `part` | Part ID: `{Package}-{Value}` matching the board XML |
 
 ## Typical workflow
 
-### First-time project setup
+### Before a job
 
 ```bash
-make pnp          # generate board.xml + ensure parts
-make feeders      # assign parts to feeder slots
-make feeder-map   # visualize the setup (with IPN cross-reference)
+make setup        # apply base config + assign feeders
+# open OpenPnP, run the job
+```
+
+### After a job
+
+```bash
+# close OpenPnP
+make save         # pull tuning + commit + push
 ```
 
 ### After PCB revision
 
 ```bash
-make pnp          # regenerate with new placements
-make feeders      # re-assign (new parts flagged as not_found)
-# update feeders.csv for new parts, then:
-make feeders      # assign new parts
-```
-
-### Switching between projects
-
-```bash
-cd other-project/hardware
-make feeders      # reassigns all feeder slots for this project
-# swap tape strips to match, then run OpenPnP
+make pnp          # regenerate board.xml + ensure parts
+make setup        # apply + assign (update feeders.csv first if new parts)
 ```
 
 ## Makefile integration
 
 ```makefile
+PROJECT = myboard
+
 pnp:
 	kicad-cli pcb export pos --format csv --side both --units mm \
-		--smd-only --exclude-dnp board.kicad_pcb
-	openpnp-tools generate -o pnp -n $(PROJECT) board.csv
+		--smd-only --exclude-dnp $(PROJECT).kicad_pcb
+	openpnp-tools generate -o pnp -n $(PROJECT) $(PROJECT).csv
 	openpnp-tools ensure-parts pnp/$(PROJECT).board.xml
 
-feeders:
-	openpnp-tools assign pnp/feeders.csv
+setup:
+	openpnp-tools config apply
+	openpnp-tools assign --reset-unused pnp/feeders.csv
+
+save:
+	openpnp-tools config save -m "tuning: update from $(PROJECT)"
 
 feeder-map:
 	kicad-cli sch export bom --fields "Value,Footprint,IPN" \
