@@ -149,6 +149,30 @@ These flags are available on all commands:
 
 ## Configuration
 
+### Settings file (`~/.openpnp2/.openpnp-tools.yaml`)
+
+Optional config file to avoid repeating flags. Looked up in the `--config-dir`
+directory (default: `~/.openpnp2`).
+
+```yaml
+# Path to the openpnp-config git repo
+repo-dir: /home/user/dev/openpnp-config
+```
+
+| Key | Used by | Description |
+| --- | ------- | ----------- |
+| `repo-dir` | `config apply`, `config pull`, `config status` | Default `--from`/`--to`/`--repo` directory |
+
+With `repo-dir` set, you can run all config commands from any directory:
+
+```bash
+openpnp-tools config pull       # pulls to repo-dir
+openpnp-tools config apply      # applies from repo-dir
+openpnp-tools config status     # compares live vs repo-dir
+```
+
+CLI flags always override the config file.
+
 ### Package map (`~/.openpnp2/openpnp-package-map.csv`)
 
 Single source of truth for package metadata, shared across all projects:

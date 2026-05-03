@@ -24,10 +24,7 @@ var configStatusCmd = &cobra.Command{
 			fmt.Println("OpenPnP: STOPPED")
 		}
 
-		repo := statusRepoFlag
-		if repo == "" {
-			repo = "."
-		}
+		repo := repoDir(statusRepoFlag)
 		results, err := config.CompareFiles(configDirFlag, repo)
 		if err != nil {
 			return err

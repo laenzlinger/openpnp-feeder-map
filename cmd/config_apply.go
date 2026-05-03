@@ -29,10 +29,7 @@ var configApplyCmd = &cobra.Command{
 			fmt.Printf("  backup → %s\n", dir)
 		}
 
-		from := applyFromFlag
-		if from == "" {
-			from = "."
-		}
+		from := repoDir(applyFromFlag)
 		copied, err := config.CopyManagedFiles(from, configDirFlag)
 		if err != nil {
 			return err

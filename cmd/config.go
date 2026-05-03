@@ -8,10 +8,30 @@ import (
 )
 
 var configDirFlag string
+var settings config.Settings
 
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Manage OpenPnP configuration (backup, apply, pull, status)",
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		s, err := config.LoadSettings(configDirFlag)
+		if err != nil {
+			return err
+		}
+		settings = s
+		return nil
+	},
+}
+
+// repoDir returns the effective repo directory: explicit flag value, or settings, or ".".
+func repoDir(flag string) string {
+	if flag != "" {
+		return flag
+	}
+	if settings.RepoDir != "" {
+		return settings.RepoDir
+	}
+	return "."
 }
 
 func init() {

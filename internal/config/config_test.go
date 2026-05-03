@@ -5,8 +5,55 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
+
+func TestParseSettings(t *testing.T) {
+	input := "# comment\nrepo-dir: /home/user/openpnp-config\n"
+	s, err := parseSettings(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("parseSettings: %v", err)
+	}
+	if s.RepoDir != "/home/user/openpnp-config" {
+		t.Errorf("RepoDir = %q, want /home/user/openpnp-config", s.RepoDir)
+	}
+}
+
+func TestParseSettingsEmpty(t *testing.T) {
+	s, err := parseSettings(strings.NewReader(""))
+	if err != nil {
+		t.Fatalf("parseSettings: %v", err)
+	}
+	if s.RepoDir != "" {
+		t.Errorf("RepoDir = %q, want empty", s.RepoDir)
+	}
+}
+
+func TestLoadSettingsMissing(t *testing.T) {
+	s, err := LoadSettings(t.TempDir())
+	if err != nil {
+		t.Fatalf("LoadSettings: %v", err)
+	}
+	if s.RepoDir != "" {
+		t.Errorf("RepoDir = %q, want empty", s.RepoDir)
+	}
+}
+
+func TestLoadSettingsFromFile(t *testing.T) {
+	dir := t.TempDir()
+	content := "repo-dir: /tmp/my-config\n"
+	if err := os.WriteFile(filepath.Join(dir, FileName), []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s, err := LoadSettings(dir)
+	if err != nil {
+		t.Fatalf("LoadSettings: %v", err)
+	}
+	if s.RepoDir != "/tmp/my-config" {
+		t.Errorf("RepoDir = %q, want /tmp/my-config", s.RepoDir)
+	}
+}
 
 func setupTestDir(t *testing.T) string {
 	t.Helper()

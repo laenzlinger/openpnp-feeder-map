@@ -3,6 +3,7 @@
 package config
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -35,7 +36,48 @@ const (
 	backupSubdir = "backups"
 	// OpenPnP's timestamp format: 2024-10-18_18.15.12
 	timestampFmt = "2006-01-02_15.04.05"
+	// FileName is the config file name looked up in ~/.openpnp2/.
+	FileName = ".openpnp-tools.yaml"
 )
+
+// Settings holds values loaded from the config file.
+type Settings struct {
+	RepoDir string // repo-dir: path to the openpnp-config repo
+}
+
+// LoadSettings reads the config file from configDir/FileName.
+// Returns empty Settings (no error) if the file doesn't exist.
+func LoadSettings(configDir string) (Settings, error) {
+	path := filepath.Join(configDir, FileName)
+	f, err := os.Open(path)
+	if os.IsNotExist(err) {
+		return Settings{}, nil
+	}
+	if err != nil {
+		return Settings{}, err
+	}
+	defer func() { _ = f.Close() }()
+	return parseSettings(f)
+}
+
+func parseSettings(r io.Reader) (Settings, error) {
+	var s Settings
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || line[0] == '#' {
+			continue
+		}
+		key, val, ok := strings.Cut(line, ":")
+		if !ok {
+			continue
+		}
+		if strings.TrimSpace(key) == "repo-dir" {
+			s.RepoDir = strings.TrimSpace(val)
+		}
+	}
+	return s, scanner.Err()
+}
 
 // DefaultConfigDir returns ~/.openpnp2.
 func DefaultConfigDir() string {

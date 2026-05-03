@@ -24,10 +24,7 @@ var configPullCmd = &cobra.Command{
 			return err
 		}
 
-		to := pullToFlag
-		if to == "" {
-			to = "."
-		}
+		to := repoDir(pullToFlag)
 
 		copied, err := config.CopyManagedFiles(configDirFlag, to)
 		if err != nil {
