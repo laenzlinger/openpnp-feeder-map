@@ -279,6 +279,13 @@ make test     # run tests
 make lint     # run linter
 ```
 
+## Acknowledgments
+
+The interactive feeder map was inspired by
+[psypnp](https://inductive-kickback.com/2020/10/psypnp-for-openpnp/) by
+Pat Deegan — a collection of OpenPnP scripting utilities for feeder management
+and job setup.
+
 ## License
 
 GPL-3.0-or-later — aligned with [OpenPnP](https://github.com/openpnp/openpnp).
