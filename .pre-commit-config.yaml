@@ -15,18 +15,18 @@ repos:
     hooks:
       - id: go-build
         name: go build
-        entry: go build ./...
+        entry: mise exec -- go build ./...
         language: system
         pass_filenames: false
 
       - id: go-test
         name: go test
-        entry: go test ./...
+        entry: mise exec -- go test ./...
         language: system
         pass_filenames: false
 
       - id: golangci-lint
         name: golangci-lint
-        entry: golangci-lint run
+        entry: mise exec -- golangci-lint run
         language: system
         pass_filenames: false
