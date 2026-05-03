@@ -116,9 +116,9 @@ const boards = [
 {{end}}];
 
 const feeders = [
-{{range .Feeders}}  {id:"{{.Feeder.ID}}",name:"{{.Feeder.Name}}",part:"{{.Feeder.PartID}}",type:"{{.Feeder.FeederType}}",tape:"{{.Feeder.TapeType}}",count:{{.Count}},x1:{{.StartX}},y1:{{.StartY}},x2:{{.EndX}},y2:{{.EndY}},hasEnd:{{.HasEnd}},tapeW:{{if .Feeder.TapeWidth}}{{.Feeder.TapeWidth.Value}}{{else}}0{{end}},pitch:{{if .Feeder.PartPitch}}{{.Feeder.PartPitch.Value}}{{else}}4{{end}},used:true},
+{{range .Feeders}}  {id:"{{.Feeder.ID}}",name:"{{.Feeder.Name}}",part:"{{.Feeder.PartID}}",type:"{{.Feeder.FeederType}}",tape:"{{.Feeder.TapeType}}",count:{{.Count}},x1:{{.StartX}},y1:{{.StartY}},x2:{{.EndX}},y2:{{.EndY}},hasEnd:{{.HasEnd}},tapeW:{{if .Feeder.TapeWidth}}{{.Feeder.TapeWidth.Value}}{{else}}0{{end}},pitch:{{if .Feeder.PartPitch}}{{.Feeder.PartPitch.Value}}{{else}}4{{end}},rot:{{.Feeder.Location.Rotation}},used:true},
 {{end}}
-{{range .UnusedFeeders}}  {id:"{{.Feeder.ID}}",name:"{{.Feeder.Name}}",part:"{{.Feeder.PartID}}",type:"{{.Feeder.FeederType}}",tape:"{{.Feeder.TapeType}}",count:0,x1:{{.StartX}},y1:{{.StartY}},x2:{{.EndX}},y2:{{.EndY}},hasEnd:{{.HasEnd}},tapeW:{{if .Feeder.TapeWidth}}{{.Feeder.TapeWidth.Value}}{{else}}0{{end}},used:false},
+{{range .UnusedFeeders}}  {id:"{{.Feeder.ID}}",name:"{{.Feeder.Name}}",part:"{{.Feeder.PartID}}",type:"{{.Feeder.FeederType}}",tape:"{{.Feeder.TapeType}}",count:0,x1:{{.StartX}},y1:{{.StartY}},x2:{{.EndX}},y2:{{.EndY}},hasEnd:{{.HasEnd}},tapeW:{{if .Feeder.TapeWidth}}{{.Feeder.TapeWidth.Value}}{{else}}0{{end}},rot:{{.Feeder.Location.Rotation}},used:false},
 {{end}}];
 
 const stripLength = {{.StripLength}};
@@ -284,11 +284,28 @@ feeders.forEach(f => {
     arrow.classList.add('feeder-dot');
     g.appendChild(arrow);
   } else {
-    let dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    dot.setAttribute('cx', f.x1); dot.setAttribute('cy', -f.y1);
-    dot.setAttribute('r', '3'); dot.setAttribute('fill', color);
-    dot.setAttribute('opacity', opacity); dot.classList.add('feeder-dot');
-    g.appendChild(dot);
+    // Rotation arrow showing part orientation in tape
+    let s = 3;
+    let rad = (f.rot || 0) * Math.PI / 180;
+    let ax = Math.cos(rad) * s, ay = Math.sin(rad) * s;
+    let arrow = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    arrow.setAttribute('transform', `translate(${f.x1},${-f.y1})`);
+    // Arrow line
+    let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', -ax); line.setAttribute('y1', ay);
+    line.setAttribute('x2', ax); line.setAttribute('y2', -ay);
+    line.setAttribute('stroke', color); line.setAttribute('stroke-width', '1.5');
+    line.setAttribute('opacity', opacity);
+    arrow.appendChild(line);
+    // Arrowhead
+    let head = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    let tx = ax, ty = -ay; // tip in SVG coords
+    let px = -Math.sin(rad) * s * 0.4, py = -Math.cos(rad) * s * 0.4;
+    head.setAttribute('points', `${tx},${ty} ${tx*0.5+px},${ty*0.5+py} ${tx*0.5-px},${ty*0.5-py}`);
+    head.setAttribute('fill', color); head.setAttribute('opacity', opacity);
+    arrow.appendChild(head);
+    arrow.classList.add('feeder-dot');
+    g.appendChild(arrow);
   }
 
   let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
