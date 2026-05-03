@@ -382,6 +382,9 @@ function highlight(id) {
   });
   document.querySelectorAll('tr[data-feeder]').forEach(tr => {
     tr.classList.toggle('highlight', tr.dataset.feeder === highlightedId);
+    if (tr.dataset.feeder === highlightedId) {
+      tr.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    }
   });
 }
 
