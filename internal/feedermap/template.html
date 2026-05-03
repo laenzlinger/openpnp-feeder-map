@@ -285,7 +285,7 @@ feeders.forEach(f => {
     g.appendChild(arrow);
   } else {
     // Rotation arrow showing part orientation in tape
-    let s = 3;
+    let s = 5;
     let rad = (f.rot || 0) * Math.PI / 180;
     let ax = Math.cos(rad) * s, ay = Math.sin(rad) * s;
     let arrow = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -294,14 +294,14 @@ feeders.forEach(f => {
     let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     line.setAttribute('x1', -ax); line.setAttribute('y1', ay);
     line.setAttribute('x2', ax); line.setAttribute('y2', -ay);
-    line.setAttribute('stroke', color); line.setAttribute('stroke-width', '1.5');
+    line.setAttribute('stroke', color); line.setAttribute('stroke-width', '2');
     line.setAttribute('opacity', opacity);
     arrow.appendChild(line);
     // Arrowhead
     let head = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
     let tx = ax, ty = -ay; // tip in SVG coords
-    let px = -Math.sin(rad) * s * 0.4, py = -Math.cos(rad) * s * 0.4;
-    head.setAttribute('points', `${tx},${ty} ${tx*0.5+px},${ty*0.5+py} ${tx*0.5-px},${ty*0.5-py}`);
+    let px = -Math.sin(rad) * s * 0.5, py = -Math.cos(rad) * s * 0.5;
+    head.setAttribute('points', `${tx},${ty} ${tx*0.4+px},${ty*0.4+py} ${tx*0.4-px},${ty*0.4-py}`);
     head.setAttribute('fill', color); head.setAttribute('opacity', opacity);
     arrow.appendChild(head);
     arrow.classList.add('feeder-dot');
