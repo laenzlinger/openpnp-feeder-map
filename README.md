@@ -269,7 +269,9 @@ make lint     # run linter
 openpnp-tools for its pick-and-place workflow. See its
 [hardware/Makefile](https://github.com/laenzlinger/granit/blob/main/hardware/Makefile)
 and [pnp/](https://github.com/laenzlinger/granit/tree/main/hardware/pnp) directory
-for a real-world setup.
+for a real-world setup. The
+[interactive feeder map](https://laenzlinger.github.io/granit/latest/feeder-map.html)
+is also deployed to the site.
 
 ## Acknowledgments
 
