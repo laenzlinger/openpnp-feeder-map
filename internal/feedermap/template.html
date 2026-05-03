@@ -244,6 +244,22 @@ feeders.forEach(f => {
       poly.classList.add('tape-outline');
       g.appendChild(poly);
 
+      // Sprocket holes at 4mm intervals along the tape
+      // EIA-481: holes are 1.75mm from the edge, on the side closer to x1→x2 start
+      let ux = dx/len, uy = dy/len;
+      let sprocketOffset = -(hw - 1.75); // offset from center toward sprocket edge
+      for (let d = 2; d < len; d += 4) {
+        let cx = f.x1 + ux * d + nx * sprocketOffset;
+        let cy = f.y1 + uy * d + ny * sprocketOffset;
+        let hole = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        hole.setAttribute('cx', cx); hole.setAttribute('cy', -cy);
+        hole.setAttribute('r', '0.75');
+        hole.setAttribute('fill', 'none');
+        hole.setAttribute('stroke', color); hole.setAttribute('stroke-width', '0.3');
+        hole.setAttribute('opacity', opacity == '1' ? '0.3' : '0.15');
+        g.appendChild(hole);
+      }
+
       // Needed tape length for job
       if (f.used && f.count > 0 && f.pitch > 0) {
         let needLen = f.count * f.pitch;
@@ -284,12 +300,14 @@ feeders.forEach(f => {
     arrow.classList.add('feeder-dot');
     g.appendChild(arrow);
   } else {
-    // Rotation arrow showing part orientation in tape
+    // Rotation arrow showing part orientation relative to feed direction
     let s = 5;
-    let rad = (f.rot || 0) * Math.PI / 180;
+    let fdx = f.x2 - f.x1, fdy = f.y2 - f.y1;
+    let flen = Math.sqrt(fdx*fdx + fdy*fdy) || 1;
+    let feedAngle = Math.atan2(fdy, fdx); // feed direction angle
+    let rad = feedAngle + (f.rot || 0) * Math.PI / 180; // rotation relative to feed
     let arrow = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     arrow.setAttribute('transform', `translate(${f.x1},${-f.y1})`);
-    // Solid triangle pointing in rotation direction
     let tip = [Math.cos(rad) * s, -Math.sin(rad) * s];
     let left = [Math.cos(rad + 2.5) * s * 0.7, -Math.sin(rad + 2.5) * s * 0.7];
     let right = [Math.cos(rad - 2.5) * s * 0.7, -Math.sin(rad - 2.5) * s * 0.7];
