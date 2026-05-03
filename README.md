@@ -263,6 +263,14 @@ make test     # run tests
 make lint     # run linter
 ```
 
+## Example
+
+[Granit](https://laenzlinger.github.io/granit/) is a hardware project using
+openpnp-tools for its pick-and-place workflow. See its
+[hardware/Makefile](https://github.com/laenzlinger/granit/blob/main/hardware/Makefile)
+and [pnp/](https://github.com/laenzlinger/granit/tree/main/hardware/pnp) directory
+for a real-world setup.
+
 ## Acknowledgments
 
 The interactive feeder map was inspired by
