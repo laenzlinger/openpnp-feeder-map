@@ -188,6 +188,97 @@ func CompareFiles(configDir, repoDir string) ([]FileStatus, error) {
 	return results, nil
 }
 
+// ExtractFeedCounts reads feeder name → feed-count pairs from a machine.xml.
+func ExtractFeedCounts(machinePath string) (map[string]string, error) {
+	data, err := os.ReadFile(machinePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	counts := make(map[string]string)
+	content := string(data)
+	offset := 0
+	for {
+		idx := strings.Index(content[offset:], "ReferenceStripFeeder")
+		if idx == -1 {
+			break
+		}
+		abs := offset + idx
+		// Find end of this feeder tag
+		end := strings.Index(content[abs:], ">")
+		if end == -1 {
+			break
+		}
+		tag := content[abs : abs+end]
+
+		name := extractAttr(tag, "name")
+		fc := extractAttr(tag, "feed-count")
+		if name != "" && fc != "" && fc != "0" {
+			counts[name] = fc
+		}
+		offset = abs + end
+	}
+	return counts, nil
+}
+
+// RestoreFeedCounts writes saved feed counts back into a machine.xml.
+// Returns the number of feed counts restored.
+func RestoreFeedCounts(machinePath string, counts map[string]string) (int, error) {
+	if len(counts) == 0 {
+		return 0, nil
+	}
+	data, err := os.ReadFile(machinePath)
+	if err != nil {
+		return 0, err
+	}
+	content := string(data)
+	restored := 0
+	for name, count := range counts {
+		marker := fmt.Sprintf(`name="%s"`, name)
+		idx := strings.Index(content, marker)
+		if idx == -1 {
+			continue
+		}
+		// Find feed-count="..." after this feeder name (within the same tag)
+		end := strings.Index(content[idx:], ">")
+		if end == -1 {
+			continue
+		}
+		tag := content[idx : idx+end]
+		fcMarker := `feed-count="`
+		fcIdx := strings.Index(tag, fcMarker)
+		if fcIdx == -1 {
+			continue
+		}
+		absStart := idx + fcIdx + len(fcMarker)
+		absEnd := absStart + strings.Index(content[absStart:], `"`)
+		content = content[:absStart] + count + content[absEnd:]
+		restored++
+	}
+	if restored > 0 {
+		if err := os.WriteFile(machinePath, []byte(content), 0o600); err != nil {
+			return 0, err
+		}
+	}
+	return restored, nil
+}
+
+func extractAttr(tag, attr string) string {
+	marker := attr + `="`
+	idx := strings.Index(tag, marker)
+	if idx == -1 {
+		return ""
+	}
+	start := idx + len(marker)
+	end := strings.Index(tag[start:], `"`)
+	if end == -1 {
+		return ""
+	}
+	return tag[start : start+end]
+}
+
 func copyFile(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {

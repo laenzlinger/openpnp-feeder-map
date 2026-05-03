@@ -4,6 +4,7 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/laenzlinger/openpnp-tools/internal/config"
 	"github.com/spf13/cobra"
@@ -14,12 +15,16 @@ var applyNoBackupFlag bool
 
 var configApplyCmd = &cobra.Command{
 	Use:          "apply",
-	Short:        "Apply base config to ~/.openpnp2 (backs up first, OpenPnP must be closed)",
+	Short:        "Apply base config to ~/.openpnp2 (preserves feed counts, backs up first)",
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := config.CheckNotRunning(); err != nil {
 			return err
 		}
+
+		// Save feed counts before overwriting
+		machPath := filepath.Join(configDirFlag, "machine.xml")
+		feedCounts, _ := config.ExtractFeedCounts(machPath)
 
 		if !applyNoBackupFlag {
 			dir, err := config.Backup(configDirFlag)
@@ -37,6 +42,16 @@ var configApplyCmd = &cobra.Command{
 		for _, f := range copied {
 			fmt.Printf("  %s applied\n", f)
 		}
+
+		// Restore feed counts
+		restored, err := config.RestoreFeedCounts(machPath, feedCounts)
+		if err != nil {
+			return fmt.Errorf("restoring feed counts: %w", err)
+		}
+		if restored > 0 {
+			fmt.Printf("  %d feed counts preserved\n", restored)
+		}
+
 		fmt.Println("Applied config repo → " + configDirFlag)
 		return nil
 	},
