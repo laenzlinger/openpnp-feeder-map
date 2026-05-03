@@ -27,17 +27,17 @@ KiCad Schematic                 KiCad PCB
       │                      │ ensure-parts │──▶ parts.xml, packages.xml
       │                      └──────────────┘
       │
-      │    pnp/feeders.csv ─▶┌──────────────┐
+      │   pnp/feeders.csv ─▶ ┌──────────────┐
       │                      │    assign    │──▶ machine.xml (feeder slots)
       │                      └──────────────┘
       │
-      │    pnp/job.xml ─────▶┌──────────────┐
+      │   pnp/job.xml ─────▶ ┌──────────────┐
       └────────────────────▶ │     map      │──▶ pnp/feeder-map.html
                               └──────────────┘
 
-Shared config:
+Shared config (from config repo, resolved via repo-dir):
   openpnp-package-map.csv    Footprint → package mapping + tape metadata
-  ~/.openpnp2/machine.xml    Feeder positions, bed dimensions
+  machine.xml                Feeder positions, bed dimensions
 ```
 
 ## Commands
