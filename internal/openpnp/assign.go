@@ -68,22 +68,7 @@ func AssignFeeders(
 		content = content[:start] + a.PartID + content[end:]
 
 		pkg := PackageFromPartID(a.PartID, pkgMap)
-		info, ok := pkgMap.LookupByPackage(pkg)
-		if ok && info.TapeType != "" {
-			content = replaceFeederAttr(content, a.FeederName,
-				"tape-type", info.TapeType)
-		}
-		if ok && info.PartPitch > 0 {
-			content = replacePartPitch(content, a.FeederName,
-				info.PartPitch)
-		}
-		if ok && info.PartPitch > 0 && stripLength > 0 {
-			cap := int(stripLength/info.PartPitch) - 2
-			if cap > 0 {
-				content = replaceFeederAttr(content, a.FeederName,
-					"max-feed-count", fmt.Sprintf("%d", cap))
-			}
-		}
+		applyPackageMetadata(&content, a.FeederName, pkg, pkgMap, stripLength)
 
 		status := "unchanged"
 		if changed {
@@ -165,6 +150,32 @@ func resetUnassignedFeeders(
 	return results
 }
 
+// applyPackageMetadata sets tape-type, part-pitch, max-feed-count, and rotation
+// on a feeder based on the package map.
+func applyPackageMetadata(
+	content *string, feederName, pkg string,
+	pkgMap *generate.PackageMap, stripLength float64,
+) {
+	info, ok := pkgMap.LookupByPackage(pkg)
+	if !ok {
+		return
+	}
+	if info.TapeType != "" {
+		*content = replaceFeederAttr(*content, feederName, "tape-type", info.TapeType)
+	}
+	if info.PartPitch > 0 {
+		*content = replacePartPitch(*content, feederName, info.PartPitch)
+	}
+	if info.PartPitch > 0 && stripLength > 0 {
+		cap := int(stripLength/info.PartPitch) - 2
+		if cap > 0 {
+			*content = replaceFeederAttr(*content, feederName,
+				"max-feed-count", fmt.Sprintf("%d", cap))
+		}
+	}
+	*content = replaceFeederLocationRotation(*content, feederName, info.RotationOffset)
+}
+
 // replaceFeederAttr replaces an attribute value on the feeder element.
 func replaceFeederAttr(content, feederName, attr, value string) string {
 	// Find the feeder by name
@@ -214,4 +225,33 @@ func replacePartPitch(content, feederName string, pitch float64) string {
 	absStart := searchStart + pitchIdx + len(pitchMarker)
 	absEnd := absStart + strings.Index(content[absStart:], `"`)
 	return content[:absStart] + fmt.Sprintf("%.1f", pitch) + content[absEnd:]
+}
+
+// replaceFeederLocationRotation sets the rotation on the feeder's <location> element.
+// This is the "Rotation in Tape" in OpenPnP — how the part is oriented in the tape pocket.
+func replaceFeederLocationRotation(content, feederName string, rotation float64) string {
+	nameMarker := fmt.Sprintf(`name="%s"`, feederName)
+	idx := strings.Index(content, nameMarker)
+	if idx == -1 {
+		return content
+	}
+	searchStart := idx
+	searchEnd := searchStart + 500
+	if searchEnd > len(content) {
+		searchEnd = len(content)
+	}
+	region := content[searchStart:searchEnd]
+	locMarker := `<location `
+	locIdx := strings.Index(region, locMarker)
+	if locIdx == -1 {
+		return content
+	}
+	rotMarker := `rotation="`
+	rotIdx := strings.Index(region[locIdx:], rotMarker)
+	if rotIdx == -1 {
+		return content
+	}
+	absStart := searchStart + locIdx + rotIdx + len(rotMarker)
+	absEnd := absStart + strings.Index(content[absStart:], `"`)
+	return content[:absStart] + fmt.Sprintf("%.1f", rotation) + content[absEnd:]
 }

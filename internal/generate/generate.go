@@ -6,7 +6,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -149,16 +148,6 @@ func ParseKiCadCSV(r io.Reader, pkgMap *PackageMap) ([]Placement, error) {
 		}
 
 		rot := strings.TrimSpace(row[5])
-		if info, ok := pkgMap.Lookup(kicadFP); ok && info.RotationOffset != 0 {
-			r, err := strconv.ParseFloat(rot, 64)
-			if err == nil {
-				r = math.Mod(r+info.RotationOffset, 360)
-				if r < 0 {
-					r += 360
-				}
-				rot = strconv.FormatFloat(r, 'f', -1, 64)
-			}
-		}
 
 		placements = append(placements, Placement{
 			Ref:     ref,
