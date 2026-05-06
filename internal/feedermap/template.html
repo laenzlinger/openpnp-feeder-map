@@ -5,48 +5,73 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Feeder Map — {{.JobFile}}</title>
 <style>
-:root { --theme: rgb(255,255,255); --entry: rgb(255,255,255); --primary: rgb(30,30,30); --secondary: rgb(108,108,108); --tertiary: rgb(214,214,214); --content: rgb(31,31,31); --code-bg: rgb(245,245,245); --border: rgb(238,238,238); --ok: #2a9d8f; --warn: #e9c46a; --err: #e76f51; --feeder-fill: rgba(42,157,143,0.08); --feeder-need: rgba(42,157,143,0.25); --dim: rgb(108,108,108); --bed: rgb(214,214,214); }
+:root {
+  --kicad-bg: #f6f6f6;
+  --kicad-bg-alt: #eee;
+  --kicad-text: #1d1d1d;
+  --kicad-text-secondary: #6b7280;
+  --kicad-border: #d1d5db;
+  --kicad-surface: #fff;
+  --kicad-primary: #3b82f6;
+  --kicad-ok: #2a9d8f;
+  --kicad-warn: #e9c46a;
+  --kicad-err: #e76f51;
+  --kicad-feeder-fill: rgba(42,157,143,0.08);
+  --kicad-feeder-need: rgba(42,157,143,0.25);
+}
 @media(prefers-color-scheme:dark) {
-  :root { --theme: rgb(29,30,32); --entry: rgb(46,46,51); --primary: rgb(218,218,219); --secondary: rgb(155,156,157); --tertiary: rgb(65,66,68); --content: rgb(196,196,197); --code-bg: rgb(55,56,62); --border: rgb(51,51,51); --ok: #2a9d8f; --warn: #e9c46a; --err: #e76f51; --feeder-fill: rgba(42,157,143,0.12); --feeder-need: rgba(42,157,143,0.3); --dim: rgb(155,156,157); --bed: rgb(65,66,68); }
+  :root {
+    --kicad-bg: #1e1e1e;
+    --kicad-bg-alt: #2a2a2a;
+    --kicad-text: #e5e7eb;
+    --kicad-text-secondary: #9ca3af;
+    --kicad-border: #374151;
+    --kicad-surface: #111;
+    --kicad-primary: #60a5fa;
+    --kicad-ok: #2a9d8f;
+    --kicad-warn: #e9c46a;
+    --kicad-err: #e76f51;
+    --kicad-feeder-fill: rgba(42,157,143,0.12);
+    --kicad-feeder-need: rgba(42,157,143,0.3);
+  }
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif; font-size: 16px; background: var(--theme); color: var(--primary); }
-h1 { padding: 1rem; font-size: 1.2rem; background: var(--entry); border-bottom: 1px solid var(--border); }
-h1 small { font-weight: normal; color: var(--secondary); margin-left: 0.5rem; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif; font-size: 16px; background: var(--kicad-bg); color: var(--kicad-text); }
+h1 { padding: 1rem; font-size: 1.2rem; background: var(--kicad-surface); border-bottom: 1px solid var(--kicad-border); }
+h1 small { font-weight: normal; color: var(--kicad-text-secondary); margin-left: 0.5rem; }
 .layout { display: flex; height: calc(100vh - 3.5rem); }
-.map-wrap { flex: 1; position: relative; overflow: hidden; background: var(--theme); }
+.map-wrap { flex: 1; position: relative; overflow: hidden; background: var(--kicad-bg); }
 svg { width: 100%; height: 100%; }
-.sidebar { width: 480px; min-width: 200px; max-width: 80vw; overflow-y: auto; background: var(--entry); border-left: 1px solid var(--border); padding: 1rem; flex-shrink: 0; }
-.resize-handle { width: 5px; cursor: col-resize; background: var(--border); flex-shrink: 0; }
-.resize-handle:hover { background: var(--ok); }
-.sidebar h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--secondary); margin: 1rem 0 0.5rem; }
+.sidebar { width: 480px; min-width: 200px; max-width: 80vw; overflow-y: auto; background: var(--kicad-surface); border-left: 1px solid var(--kicad-border); padding: 1rem; flex-shrink: 0; }
+.resize-handle { width: 5px; cursor: col-resize; background: var(--kicad-border); flex-shrink: 0; }
+.resize-handle:hover { background: var(--kicad-ok); }
+.sidebar h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--kicad-text-secondary); margin: 1rem 0 0.5rem; }
 .sidebar h2:first-child { margin-top: 0; }
 table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-th { text-align: left; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border); color: var(--secondary); font-weight: 600; }
-td { padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border); }
+th { text-align: left; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--kicad-border); color: var(--kicad-text-secondary); font-weight: 600; }
+td { padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--kicad-border); }
 tr.highlight td { background: rgba(42,157,143,0.12); }
-tr:hover td { background: var(--code-bg); cursor: pointer; }
+tr:hover td { background: var(--kicad-bg-alt); cursor: pointer; }
 .badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem; font-weight: 600; }
-.badge-strip { background: rgba(42,157,143,0.15); color: var(--ok); }
-.badge-pushpull { background: rgba(230,126,34,0.15); color: #e67e22; }
-.badge-pushpull { background: rgba(233,196,106,0.15); color: var(--warn); }
-.badge-tray { background: rgba(231,111,81,0.15); color: var(--err); }
-.badge-count { background: var(--code-bg); color: var(--primary); }
-.missing { color: var(--err); }
-.unused { color: var(--secondary); }
-.tape-hint { font-size: 0.7rem; color: var(--secondary); }
-.legend { display: flex; gap: 1rem; padding: 0.5rem 1rem; background: var(--entry); border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--secondary); }
+.badge-strip { background: rgba(42,157,143,0.15); color: var(--kicad-ok); }
+.badge-pushpull { background: rgba(233,196,106,0.15); color: var(--kicad-warn); }
+.badge-tray { background: rgba(231,111,81,0.15); color: var(--kicad-err); }
+.badge-count { background: var(--kicad-bg-alt); color: var(--kicad-text); }
+.missing { color: var(--kicad-err); }
+.unused { color: var(--kicad-text-secondary); }
+.tape-hint { font-size: 0.7rem; color: var(--kicad-text-secondary); }
+.legend { display: flex; gap: 1rem; padding: 0.5rem 1rem; background: var(--kicad-surface); border-top: 1px solid var(--kicad-border); font-size: 0.75rem; color: var(--kicad-text-secondary); }
 .legend span { display: flex; align-items: center; gap: 0.3rem; }
 .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .feeder-group { cursor: pointer; }
 .feeder-group:hover .feeder-line { stroke-width: 4; }
 .feeder-group:hover .tape-outline { stroke-width: 2; stroke-opacity: 0.8 !important; }
 .feeder-group:hover .feeder-dot { r: 5; }
-.feeder-label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 10px; fill: var(--primary); pointer-events: none; }
-.tooltip { position: absolute; background: var(--entry); border: 1px solid var(--border); padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.8rem; pointer-events: none; display: none; z-index: 10; max-width: 300px; }
-.tooltip .tt-name { font-weight: 600; color: var(--primary); }
-.tooltip .tt-part { color: var(--ok); }
-.tooltip .tt-detail { color: var(--secondary); font-size: 0.75rem; }
+.feeder-label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 10px; fill: var(--kicad-text); pointer-events: none; }
+.tooltip { position: absolute; background: var(--kicad-surface); border: 1px solid var(--kicad-border); padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.8rem; pointer-events: none; display: none; z-index: 10; max-width: 300px; }
+.tooltip .tt-name { font-weight: 600; color: var(--kicad-text); }
+.tooltip .tt-part { color: var(--kicad-ok); }
+.tooltip .tt-detail { color: var(--kicad-text-secondary); font-size: 0.75rem; }
 </style>
 </head>
 <body>
@@ -103,10 +128,10 @@ tr:hover td { background: var(--code-bg); cursor: pointer; }
 </div>
 </div>
 <div class="legend">
-  <span><span class="legend-dot" style="background:var(--ok)"></span> Job feeder</span>
-  <span><span class="legend-dot" style="background:var(--dim)"></span> Unused feeder</span>
-  <span><span class="legend-dot" style="background:var(--err)"></span> Missing part</span>
-  <span><span class="legend-dot" style="background:var(--warn)"></span> Board outline</span>
+  <span><span class="legend-dot" style="background:var(--kicad-ok)"></span> Job feeder</span>
+  <span><span class="legend-dot" style="background:var(--kicad-text-secondary)"></span> Unused feeder</span>
+  <span><span class="legend-dot" style="background:var(--kicad-err)"></span> Missing part</span>
+  <span><span class="legend-dot" style="background:var(--kicad-warn)"></span> Board outline</span>
   <span>○ Reference hole &nbsp; → Feed direction</span>
 </div>
 
@@ -160,7 +185,7 @@ let bed = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
 bed.setAttribute('x', {{.BedXMin}}); bed.setAttribute('y', -{{.BedYMax}});
 bed.setAttribute('width', {{.BedXMax}} - {{.BedXMin}});
 bed.setAttribute('height', {{.BedYMax}} - {{.BedYMin}});
-bed.setAttribute('fill', 'none'); bed.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--tertiary').trim());
+bed.setAttribute('fill', 'none'); bed.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--kicad-border').trim());
 bed.setAttribute('stroke-width', '1'); bed.setAttribute('stroke-dasharray', '8 4');
 svg.appendChild(bed);
 // Include bed in bounds
@@ -177,14 +202,14 @@ boards.forEach(b => {
   rect.setAttribute('x', b.x); rect.setAttribute('y', -(b.y + b.h));
   rect.setAttribute('width', b.w); rect.setAttribute('height', b.h);
   rect.setAttribute('fill', 'none');
-  rect.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--warn').trim());
+  rect.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--kicad-warn').trim());
   rect.setAttribute('stroke-width', '1'); rect.setAttribute('stroke-dasharray', '4 2');
   g.appendChild(rect);
   let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   text.setAttribute('x', b.x + b.w / 2); text.setAttribute('y', -(b.y + b.h) - 2);
   text.setAttribute('text-anchor', 'middle');
   text.classList.add('feeder-label');
-  text.style.fill = getComputedStyle(document.documentElement).getPropertyValue('--warn').trim();
+  text.style.fill = getComputedStyle(document.documentElement).getPropertyValue('--kicad-warn').trim();
   text.textContent = b.name;
   g.appendChild(text);
   svg.appendChild(g);
@@ -216,8 +241,8 @@ feeders.forEach(f => {
   if (!f.used) g.classList.add('unused-group');
   g.dataset.feederId = f.id;
 
-  let color = f.used ? '#2a9d8f' : getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim();
-  let dimColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim();
+  let color = f.used ? '#2a9d8f' : getComputedStyle(document.documentElement).getPropertyValue('--kicad-text-secondary').trim();
+  let dimColor = getComputedStyle(document.documentElement).getPropertyValue('--kicad-text-secondary').trim();
   let opacity = f.used ? '1' : '0.5';
 
   // Tape outline for strip feeders
