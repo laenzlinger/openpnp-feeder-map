@@ -33,7 +33,7 @@ KiCad Schematic                 KiCad PCB
       │
       │   pnp/job.xml ─────▶ ┌──────────────┐
       └────────────────────▶ │     map      │──▶ pnp/feeder-map.html
-                              └──────────────┘
+                             └──────────────┘
 
 Shared config (from config repo, resolved via repo-dir):
   openpnp-package-map.csv    Footprint → package mapping + tape metadata
